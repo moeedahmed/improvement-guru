@@ -91,3 +91,15 @@ Complete the current task with the minimum sufficient change.
 
 `CLAUDE.md` is a symlink to this file for Claude Code compatibility. Do not
 maintain duplicate long-form agent context files.
+<!-- product-standard:start (master copy: moeedahmed/skills skills/product-standard; edit there, not here) -->
+## EM Gurus product standard
+
+Applies to every EM Gurus product. Where this file says something stricter above, the stricter rule wins.
+
+- **Build:** keep this repo's stack; meet the house quality bar (clean build, critical-path tests, no Critical/High security findings, visual checks at mobile and desktop width); put deterministic logic in code with a test that fails if it regresses.
+- **Release:** a task from Moeed is already approved. Merge the latest main, run this repo's full checks, release, confirm it is actually live, then tell Moeed in one line that it is done and live so he can test. Never force-push. A feature switched off by default is fine to release.
+- **Still ask first** (one tappable question, recommendation marked): deleting user data, changing stored passwords or keys, database changes that lose data, and anything sent to real users or the public.
+- **Reliability:** keep a health check, error alerts and a known rollback path (last good version plus the exact command). If a release fails its checks or live proof, roll back or fix forward in the same run and say which.
+- **Messages to Moeed:** first line is the point, plain English, short bullets. When done, give a short summary and close your own thread.
+- **Marketing voice:** anything written as Moeed or for the public follows the `moeed-voice` skill; posting or sending it still needs his yes.
+<!-- product-standard:end -->
