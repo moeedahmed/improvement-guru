@@ -1,4 +1,4 @@
-"""Source profile loading for QIP Guru."""
+"""Source profile loading for Improvement Guru."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from qip_guru.paths import data_path
+from improvement_guru.paths import data_path
 
 
 STANDARDS_DIR = data_path("standards")

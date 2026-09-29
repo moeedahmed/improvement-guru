@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Local release-readiness smoke check for QIP Guru."""
+"""Local release-readiness smoke check for Improvement Guru."""
 
 from __future__ import annotations
 
@@ -17,10 +17,10 @@ from typing import Iterator
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from qip_guru.deid import redact_file, scan_file  # noqa: E402
-from qip_guru.charts import analyse_run_chart_csv  # noqa: E402
-from qip_guru.scaffold import create_project  # noqa: E402
-from qip_guru.sources import format_profile, list_profiles, load_profile  # noqa: E402
+from improvement_guru.deid import redact_file, scan_file  # noqa: E402
+from improvement_guru.charts import analyse_run_chart_csv  # noqa: E402
+from improvement_guru.scaffold import create_project  # noqa: E402
+from improvement_guru.sources import format_profile, list_profiles, load_profile  # noqa: E402
 
 
 EXPECTED_PROFILES = {"global", "uk", "us", "canada", "australia"}
@@ -66,7 +66,7 @@ GENERATED_ARTIFACT_PATTERNS = (
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run local QIP Guru release-readiness smoke checks.")
+    parser = argparse.ArgumentParser(description="Run local Improvement Guru release-readiness smoke checks.")
     parser.add_argument(
         "--workdir",
         help="empty directory for generated synthetic scaffolds; defaults to a temporary directory",
@@ -74,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--install-smoke",
         action="store_true",
-        help="also install this checkout into a temporary venv without network access and run the qip console script",
+        help="also install this checkout into a temporary venv without network access and run the improvement-guru console script",
     )
     args = parser.parse_args(argv)
 
@@ -192,7 +192,7 @@ def run_install_smoke(workdir: str | Path, python_executable: str | Path | None 
     # Python 3.14 venvs in this environment do not bundle setuptools. System
     # site packages let the no-network install use the already available build backend.
     _run_checked([python, "-m", "venv", "--system-site-packages", str(venv_dir)], cwd=base)
-    venv_python, qip_command, qip_guru_command = _venv_commands(venv_dir)
+    venv_python, improvement_guru_command = _venv_commands(venv_dir)
     _run_checked(
         [
             str(venv_python),
@@ -208,35 +208,35 @@ def run_install_smoke(workdir: str | Path, python_executable: str | Path | None 
     )
 
     proof: list[str] = []
-    sources = _run_checked([str(qip_guru_command), "sources", "list"], cwd=base).stdout
+    sources = _run_checked([str(improvement_guru_command), "sources", "list"], cwd=base).stdout
     for profile_id in EXPECTED_PROFILES:
         if f"{profile_id}\t" not in sources:
-            raise AssertionError(f"installed qip-guru sources list missing profile: {profile_id}")
-    proof.append("install: qip-guru sources list found all expected profiles")
+            raise AssertionError(f"installed improvement-guru sources list missing profile: {profile_id}")
+    proof.append("install: improvement-guru sources list found all expected profiles")
 
     project_dir = base / "installed_cli_uk_demo"
-    _run_checked([str(qip_command), "new", str(project_dir), "--profile", "uk"], cwd=base)
+    _run_checked([str(venv_python), "-m", "improvement_guru", "new", str(project_dir), "--profile", "uk"], cwd=base)
     source_map = project_dir / "source-map.md"
     source_text = source_map.read_text(encoding="utf-8")
     if "United Kingdom" not in source_text or "local governance" not in source_text:
-        raise AssertionError("installed qip scaffold did not include UK source-map boundaries")
-    proof.append(f"install: qip new created UK scaffold -> {project_dir}")
+        raise AssertionError("installed python -m improvement_guru scaffold did not include UK source-map boundaries")
+    proof.append(f"install: python -m improvement_guru new created UK scaffold -> {project_dir}")
 
     fixture = ROOT / "examples" / "synthetic_ward_audit.csv"
-    scan = _run_checked([str(qip_command), "deid", "scan", str(fixture)], cwd=base, expected_returncode=1)
+    scan = _run_checked([str(improvement_guru_command), "deid", "scan", str(fixture)], cwd=base, expected_returncode=1)
     if "NHS_NUMBER" not in scan.stdout or "EMAIL_ADDRESS" not in scan.stdout:
-        raise AssertionError("installed qip deid scan missing expected synthetic findings")
+        raise AssertionError("installed improvement-guru deid scan missing expected synthetic findings")
     redacted_path = base / "installed_cli_redacted.csv"
-    _run_checked([str(qip_command), "deid", "redact", str(fixture), "--out", str(redacted_path)], cwd=base)
+    _run_checked([str(improvement_guru_command), "deid", "redact", str(fixture), "--out", str(redacted_path)], cwd=base)
     redacted = redacted_path.read_text(encoding="utf-8")
     if "999 000 0018" in redacted or "alex.fake@example.nhs.uk" in redacted:
-        raise AssertionError("installed qip redaction left planted synthetic identifiers")
-    proof.append(f"install: qip deid scan/redact handled synthetic fixture -> {redacted_path}")
+        raise AssertionError("installed improvement-guru redaction left planted synthetic identifiers")
+    proof.append(f"install: improvement-guru deid scan/redact handled synthetic fixture -> {redacted_path}")
 
     run_chart_output = base / "installed_cli_ed_flow_run_chart.csv"
     _run_checked(
         [
-            str(qip_command),
+            str(improvement_guru_command),
             "charts",
             "run-chart",
             str(ROOT / "examples" / "synthetic_ed_flow_qip.csv"),
@@ -253,8 +253,8 @@ def run_install_smoke(workdir: str | Path, python_executable: str | Path | None 
     )
     run_chart_text = run_chart_output.read_text(encoding="utf-8")
     if "qip_shift_signal" not in run_chart_text or "yes" not in run_chart_text:
-        raise AssertionError("installed qip run-chart output missing signal annotation")
-    proof.append(f"install: qip charts run-chart analysed synthetic ED flow -> {run_chart_output}")
+        raise AssertionError("installed improvement-guru run-chart output missing signal annotation")
+    proof.append(f"install: improvement-guru charts run-chart analysed synthetic ED flow -> {run_chart_output}")
 
     return proof
 
@@ -399,18 +399,14 @@ def _prepared_workdir(raw_workdir: str | None) -> Iterator[Path]:
         yield workdir
         return
 
-    with TemporaryDirectory(prefix="qip-guru-release-") as temp_dir:
+    with TemporaryDirectory(prefix="improvement-guru-release-") as temp_dir:
         yield Path(temp_dir)
 
 
-def _venv_commands(venv_dir: Path) -> tuple[Path, Path, Path]:
+def _venv_commands(venv_dir: Path) -> tuple[Path, Path]:
     if sys.platform == "win32":
-        return (
-            venv_dir / "Scripts" / "python.exe",
-            venv_dir / "Scripts" / "qip.exe",
-            venv_dir / "Scripts" / "qip-guru.exe",
-        )
-    return venv_dir / "bin" / "python", venv_dir / "bin" / "qip", venv_dir / "bin" / "qip-guru"
+        return venv_dir / "Scripts" / "python.exe", venv_dir / "Scripts" / "improvement-guru.exe"
+    return venv_dir / "bin" / "python", venv_dir / "bin" / "improvement-guru"
 
 
 def _run_checked(

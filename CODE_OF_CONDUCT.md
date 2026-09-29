@@ -1,6 +1,6 @@
 # Code of Conduct
 
-QIP Guru contributors are expected to keep discussion professional, respectful, and focused on public-safe healthcare improvement tooling.
+Improvement Guru contributors are expected to keep discussion professional, respectful, and focused on public-safe healthcare improvement tooling.
 
 Do not post real patient, staff, organisation-sensitive, incident-identifiable, credential, or secret material in issues, examples, tests, discussions, or pull requests.
 

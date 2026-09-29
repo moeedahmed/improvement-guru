@@ -9,4 +9,4 @@ These files are synthetic fixtures for testing and demonstration only. They do n
 
 NHS-number fixtures with a valid modulus-11 checksum use the NHS England synthetic `999` test range convention. The ward-audit fixture keeps one invalid-checksum NHS-like value so `POSSIBLE_NHS_NUMBER` stays covered.
 
-Use these examples to test QIP Guru locally before using the scaffold on a real project. Real projects still require local governance, data minimisation, and approved data-handling routes.
+Use these examples to test Improvement Guru locally before using the scaffold on a real project. Real projects still require local governance, data minimisation, and approved data-handling routes.

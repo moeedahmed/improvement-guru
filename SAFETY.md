@@ -1,6 +1,6 @@
 # Safety
 
-QIP Guru is a public-safe educational scaffold for quality improvement and audit preparation.
+Improvement Guru is a public-safe educational scaffold for quality improvement and audit preparation.
 
 Hard boundaries:
 

@@ -43,7 +43,7 @@ jobs:
         run: python -m pytest -q
 
       - name: Compile Python files
-        run: python -m compileall qip.py qip_guru tests scripts
+        run: python -m compileall improvement_guru tests scripts
 
       - name: Run release smoke check
         run: python scripts/release_check.py --install-smoke

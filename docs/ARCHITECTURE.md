@@ -1,6 +1,6 @@
 # Architecture
 
-QIP Guru is an umbrella project, not one monolithic agent.
+Improvement Guru is an umbrella project, not one monolithic agent.
 
 ## Layers
 
@@ -25,7 +25,7 @@ QIP Guru is an umbrella project, not one monolithic agent.
    - copied whole into an agent skill directory when used; this repo does not auto-load them
 
 4. CLI
-   - deterministic file and scaffold work in `qip.py`
+   - deterministic file and scaffold work in `improvement_guru/cli.py`
    - source profile inspection
    - lightweight run-chart CSV annotation for synthetic or de-identified datasets
    - local de-id scan/redact
@@ -43,7 +43,7 @@ Agents are good at drafting, interviewing, adapting, and critique. CLIs are bett
 
 The right public product is therefore:
 
-- QIP Guru as the public brand and open-source repo/toolkit
+- Improvement Guru as the public brand and open-source repo/toolkit
 - skills as agent behaviour
 - CLI as deterministic tooling
 - examples as synthetic proof fixtures

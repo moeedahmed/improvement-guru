@@ -1,8 +1,8 @@
-# QIP Guru Product Positioning
+# Improvement Guru Product Positioning
 
 ## Decision
 
-QIP Guru is the public product and the open-source repo/toolkit name.
+Improvement Guru is the public product and the open-source repo/toolkit name.
 
 The current implementation should be described as a repo/toolkit with a small CLI and static agent skill guides. It is not a full engine.
 
@@ -10,11 +10,11 @@ The current implementation should be described as a repo/toolkit with a small CL
 
 | Surface | Decision | Notes |
 | --- | --- | --- |
-| Public brand | QIP Guru | The user-facing product family name, consistent with Exam Guru, Career Guru, and Portfolio Guru. |
-| Open-source repo/toolkit | QIP Guru | The public package of templates, source profiles, static skills, synthetic examples, and local checks. |
-| Python distribution | `qip-guru` | Public install and package metadata name. |
-| Python helper package | `qip_guru` | Internal helper package for deterministic local file work. |
-| CLI | `qip-guru` / `qip` / `python3 qip.py` | Local scaffold, source display, run-chart annotation, and assistive de-id commands. |
+| Public brand | Improvement Guru | The user-facing product family name, consistent with Exam Guru, Career Guru, and Portfolio Guru. |
+| Open-source repo/toolkit | Improvement Guru | The public package of templates, source profiles, static skills, synthetic examples, and local checks. |
+| Python distribution | `improvement-guru` | Public install and package metadata name. |
+| Python helper package | `improvement_guru` | Internal helper package for deterministic local file work. |
+| CLI | `improvement-guru` / `python3 -m improvement_guru` | Local scaffold, source display, run-chart annotation, and assistive de-id commands. |
 | Static skills | `skills/*.md` | Copyable guide material for agent contexts; not auto-loaded by this repo. |
 | Engine | Not yet | No hosted runtime, orchestration layer, model router, MCP server, dashboard, workflow engine, or background service. |
 
@@ -38,22 +38,22 @@ The current implementation should be described as a repo/toolkit with a small CL
 
 ## Naming Guidance
 
-Use `QIP Guru` when discussing the product, repository, toolkit, or product family.
+Use `Improvement Guru` when discussing the product, repository, toolkit, or product family.
 
-Use `qip-guru` for Python distribution/package metadata.
+Use `improvement-guru` for Python distribution/package metadata.
 
-Use `qip-guru` for the explicit CLI command, `qip` as the short CLI alias, and `qip_guru` for the Python helper package.
+Use `improvement-guru` for the CLI command and `improvement_guru` for the Python helper package.
 
 ## Competitive Positioning
 
-QIP Guru should not be positioned as a full QI platform yet.
+Improvement Guru should not be positioned as a full QI platform yet.
 
-| Benchmark | What They Are Good At | QIP Guru Position |
+| Benchmark | What They Are Good At | Improvement Guru Position |
 | --- | --- | --- |
 | Life QI | Paid QI project platform, reporting, dashboards, organisation portfolio, and community. | Do not compete head-on yet; win as an open-source, local-first starting point for projects and agent workflows. |
 | QI Macros | Excel-based SPC, Pareto, fishbone, templates, and statistics. | Do not claim spreadsheet/SPC parity; offer lightweight CSV annotation and source-grounded scaffolds. |
 | IHI, NHS IMPACT, HQIP, SQUIRE, AHRQ, Healthcare Excellence Canada | Authoritative methods, guidance, training, and reporting standards. | Act as source-grounded scaffolding that points back to primary sources and local governance. |
-| runcharter, qicharts, spccharter | Open-source R packages for run charts and SPC. | Treat as charting-depth benchmarks; QIP Guru's chart helper is intentionally simple at this release stage. |
+| runcharter, qicharts, spccharter | Open-source R packages for run charts and SPC. | Treat as charting-depth benchmarks; Improvement Guru's chart helper is intentionally simple at this release stage. |
 
 The public wedge is:
 
@@ -63,7 +63,7 @@ The public wedge is:
 
 Public copy should say:
 
-> QIP Guru helps clinicians, QI teams, and agent builders structure quality-improvement work with source-grounded scaffolds, static agent skill guides, synthetic examples, and local safety checks.
+> Improvement Guru helps clinicians, QI teams, and agent builders structure quality-improvement work with source-grounded scaffolds, static agent skill guides, synthetic examples, and local safety checks.
 
 Public copy should not say:
 

@@ -1,6 +1,6 @@
 import csv
 
-from qip_guru.charts import analyse_run_chart_csv
+from improvement_guru.charts import analyse_run_chart_csv
 
 
 def test_run_chart_analysis_writes_annotated_csv(tmp_path):

@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a reproducible QIP Guru bug without sensitive data
+about: Report a reproducible Improvement Guru bug without sensitive data
 title: "[Bug]: "
 labels: bug
 assignees: ""
@@ -15,7 +15,7 @@ Describe the problem and the command or workflow that triggered it.
 Use synthetic or fully de-identified inputs only.
 
 ```bash
-qip ...
+improvement-guru ...
 ```
 
 ## Expected behaviour
@@ -26,7 +26,7 @@ What should have happened instead?
 
 - OS:
 - Python version:
-- QIP Guru version or commit:
+- Improvement Guru version or commit:
 
 ## Safety check
 

@@ -7,7 +7,7 @@ import sys
 
 
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
-INSTALLED_DATA_ROOT = Path(sys.prefix) / "qip-guru"
+INSTALLED_DATA_ROOT = Path(sys.prefix) / "improvement-guru"
 
 
 def data_path(*parts: str) -> Path:

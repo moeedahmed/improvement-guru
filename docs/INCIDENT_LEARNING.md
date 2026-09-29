@@ -40,8 +40,8 @@ Do not use this kit to:
 
 Keep incident learning as a companion module:
 
-- `QIP Guru` remains the public product concept
-- `QIP Guru` remains the main repo/toolkit
+- `Improvement Guru` remains the public product concept
+- `Improvement Guru` remains the main repo/toolkit
 - `Incident Learning Pack` can be a later extension
 - UK PSIRF content lives under the UK profile
 - other countries can add their own incident-learning modules

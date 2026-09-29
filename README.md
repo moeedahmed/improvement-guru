@@ -1,31 +1,31 @@
-# QIP Guru
+# Improvement Guru
 
-[![CI](https://github.com/moeedahmed/qip-guru/actions/workflows/ci.yml/badge.svg)](https://github.com/moeedahmed/qip-guru/actions/workflows/ci.yml)
+[![CI](https://github.com/moeedahmed/improvement-guru/actions/workflows/ci.yml/badge.svg)](https://github.com/moeedahmed/improvement-guru/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-release%20candidate-orange.svg)](docs/RELEASE_READINESS.md)
 
-![QIP Guru hero image showing agent-native healthcare QI scaffolding, run charts, source profiles, local checks, and safety verification.](docs/assets/qip-guru-hero.jpg)
+![Improvement Guru hero image showing agent-native healthcare QI scaffolding, run charts, source profiles, local checks, and safety verification.](docs/assets/improvement-guru-hero.jpg)
 
-QIP Guru is an agent-native, local-first healthcare quality-improvement toolkit for building source-grounded QIP and audit project scaffolds without using patient data.
+Improvement Guru is an agent-native, local-first healthcare quality-improvement toolkit for building source-grounded QIP and audit project scaffolds without using patient data.
 
 It gives clinicians, QI teams, and agent builders a tested open-source foundation for safe improvement work: country source profiles, synthetic examples, copyable agent skill guides, lightweight run-chart annotation, and deterministic safety checks.
 
 ```bash
-git clone https://github.com/moeedahmed/qip-guru.git
-cd qip-guru
+git clone https://github.com/moeedahmed/improvement-guru.git
+cd improvement-guru
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -e ".[dev]"
-qip-guru sources list
-qip-guru new uk_demo --profile uk
+improvement-guru sources list
+improvement-guru new uk_demo --profile uk
 ```
 
-> Release state: `0.1.0rc1` public release candidate. QIP Guru is not on PyPI yet; install from a checkout for now.
+> Release state: `0.1.0rc1` public release candidate. Improvement Guru is not on PyPI yet; install from a checkout for now.
 
-## Why QIP Guru
+## Why Improvement Guru
 
-Most QI resources are scattered across templates, guidance PDFs, teaching sites, local governance routes, and platform-specific tools. QIP Guru is designed to be the open-source starting point that humans and agents can both use safely:
+Most QI resources are scattered across templates, guidance PDFs, teaching sites, local governance routes, and platform-specific tools. Improvement Guru is designed to be the open-source starting point that humans and agents can both use safely:
 
 - **Agent-native by design:** structured templates, source profiles, static skill guides, deterministic CLI checks, and outputs that agents can read, modify, verify, and extend.
 - **Source-grounded:** global, UK, US, Canadian, and Australian profiles point back to primary QI, audit, patient-safety, and reporting sources.
@@ -48,11 +48,11 @@ This is an educational scaffold. It is not an information governance tool of rec
 
 ## Product Verdict
 
-- Public brand and open-source repo: QIP Guru.
-- Python distribution: `qip-guru`.
-- Python import package: `qip_guru`.
+- Public brand and open-source repo: Improvement Guru.
+- Python distribution: `improvement-guru`.
+- Python import package: `improvement_guru`.
 - Static skills: included as guide material in `skills/`.
-- Local CLI: included as `qip-guru`, `qip`, and `python3 qip.py`.
+- Local CLI: included as `improvement-guru` and `python3 -m improvement_guru`.
 - Engine: not yet. There is no hosted runtime, model orchestration layer, MCP server, dashboard, or background service.
 
 See `docs/PRODUCT_POSITIONING.md` for naming and non-claim guidance.
@@ -82,26 +82,26 @@ python3 -m pip install -e ".[dev]"
 >
 > Alternatively, install with `--break-system-packages`, though a venv is strongly recommended.
 
-You can also run the repo-local script directly with `python3 qip.py ...`. If your environment maps `python` to Python 3.11 or newer, `python` is fine.
+You can also run the CLI from a checkout with `python3 -m improvement_guru ...`. If your environment maps `python` to Python 3.11 or newer, `python` is fine.
 
 ## Quickstart
 
-Run these commands from inside a QIP Guru checkout after installing the local package:
+Run these commands from inside a Improvement Guru checkout after installing the local package:
 
 ```bash
-qip new demo_qip_project
-qip new uk_demo --profile uk
-qip-guru sources list
-qip sources show global
-qip-guru charts run-chart examples/synthetic_ed_flow_qip.csv --value-column median_time_to_initial_assessment_minutes --date-column week --baseline-points 4 --out /tmp/ed_flow_run_chart.csv
-qip deid scan examples/synthetic_ward_audit.csv
-qip deid redact examples/synthetic_ward_audit.csv --out /tmp/synthetic_ward_audit_redacted.csv
+improvement-guru new demo_qip_project
+improvement-guru new uk_demo --profile uk
+improvement-guru sources list
+improvement-guru sources show global
+improvement-guru charts run-chart examples/synthetic_ed_flow_qip.csv --value-column median_time_to_initial_assessment_minutes --date-column week --baseline-points 4 --out /tmp/ed_flow_run_chart.csv
+improvement-guru deid scan examples/synthetic_ward_audit.csv
+improvement-guru deid redact examples/synthetic_ward_audit.csv --out /tmp/synthetic_ward_audit_redacted.csv
 python3 -m pytest -q
 ```
 
 The scan command exits `1` when findings are present and `0` when no supported patterns are found. The redact command refuses to overwrite the input file and refuses to overwrite an existing output file.
 
-Actual `qip deid scan examples/synthetic_ward_audit.csv` output:
+Actual `improvement-guru deid scan examples/synthetic_ward_audit.csv` output:
 
 ```text
 3:28	EMAIL_ADDRESS	a***@example.nhs.uk
@@ -125,7 +125,7 @@ Actual `qip deid scan examples/synthetic_ward_audit.csv` output:
 Actual run-chart command output:
 
 ```text
-/tmp/qip_guru_readme_ed_flow.csv	rows=12	median=41.5	shifts=4	trends=6
+/tmp/improvement_guru_readme_ed_flow.csv	rows=12	median=41.5	shifts=4	trends=6
 ```
 
 The annotated CSV begins:
@@ -141,7 +141,7 @@ week,median_time_to_initial_assessment_minutes,notes,qip_index,qip_value,qip_bas
 ### Create a project scaffold
 
 ```bash
-qip new <project-name> [--profile global|uk|us|canada|australia]
+improvement-guru new <project-name> [--profile global|uk|us|canada|australia]
 ```
 
 Creates a new folder containing:
@@ -161,8 +161,8 @@ Existing project folders are never overwritten.
 ### Inspect source profiles
 
 ```bash
-qip sources list
-qip sources show uk
+improvement-guru sources list
+improvement-guru sources show uk
 ```
 
 Source profiles live in `standards/`. They provide primary source anchors and boundaries for different jurisdictions. They do not replace local governance.
@@ -170,7 +170,7 @@ Source profiles live in `standards/`. They provide primary source anchors and bo
 ### Analyse a run chart CSV
 
 ```bash
-qip-guru charts run-chart <input.csv> --value-column <column> --out <annotated.csv>
+improvement-guru charts run-chart <input.csv> --value-column <column> --out <annotated.csv>
 ```
 
 Optional flags:
@@ -185,7 +185,7 @@ The command writes a new annotated CSV with `qip_` columns for baseline median, 
 ### Scan for supported identifier patterns
 
 ```bash
-qip deid scan <file.csv|file.txt>
+improvement-guru deid scan <file.csv|file.txt>
 ```
 
 Reports findings to stdout as:
@@ -208,7 +208,7 @@ The scanner does not attempt free-text name detection.
 ### Write a redacted copy
 
 ```bash
-qip deid redact <input> --out <output>
+improvement-guru deid redact <input> --out <output>
 ```
 
 The input file is read as UTF-8 text and is never modified. The output path must be different from the input path and must not already exist.
@@ -221,14 +221,14 @@ Use the included fixture only for testing. Do not put real patient-identifiable 
 
 The `skills/*.md` files are static guide material with frontmatter fields for `name` and `description`. To use one in an agent runtime, copy the whole file into that agent's skill directory and keep the frontmatter plus refusal, pause, source, and safety sections intact. This repo does not auto-load those skills or provide an agent runtime.
 
-## How QIP Guru Fits
+## How Improvement Guru Fits
 
-QIP Guru is not trying to replace mature QI platforms or statistical packages at this stage.
+Improvement Guru is not trying to replace mature QI platforms or statistical packages at this stage.
 
-- **Life QI** is the closest product benchmark: a paid QI project platform with dashboards, reporting, organisation portfolios, and community features. QIP Guru is local-first, open-source, and scaffold-focused.
-- **QI Macros** is the closest Excel/SPC benchmark: strong charts, Pareto, fishbone, templates, and statistics inside Excel. QIP Guru is not an Excel add-in and does not yet compete on SPC depth.
-- **IHI, NHS IMPACT, HQIP, SQUIRE, AHRQ, and Healthcare Excellence Canada** are source and training benchmarks. QIP Guru links users back to source-grounded methods rather than copying guidance.
-- **runcharter, qicharts, and spccharter** are open-source R charting benchmarks. QIP Guru's run-chart helper is deliberately lightweight; stronger SPC support may come later.
+- **Life QI** is the closest product benchmark: a paid QI project platform with dashboards, reporting, organisation portfolios, and community features. Improvement Guru is local-first, open-source, and scaffold-focused.
+- **QI Macros** is the closest Excel/SPC benchmark: strong charts, Pareto, fishbone, templates, and statistics inside Excel. Improvement Guru is not an Excel add-in and does not yet compete on SPC depth.
+- **IHI, NHS IMPACT, HQIP, SQUIRE, AHRQ, and Healthcare Excellence Canada** are source and training benchmarks. Improvement Guru links users back to source-grounded methods rather than copying guidance.
+- **runcharter, qicharts, and spccharter** are open-source R charting benchmarks. Improvement Guru's run-chart helper is deliberately lightweight; stronger SPC support may come later.
 
 The wedge is: agent-native, local-first QIP scaffolding with source-grounded country profiles, synthetic-safe examples, deterministic safety checks, and release-tested CLI workflows.
 
@@ -256,16 +256,16 @@ Run the local release smoke check before any public-facing release work:
 
 ```bash
 python3 -m pytest -q
-python3 -m compileall qip.py qip_guru tests scripts
+python3 -m compileall improvement_guru tests scripts
 python3 scripts/release_check.py --install-smoke
 python3 scripts/check_sources.py --dry-run
 ```
 
-The smoke check proves UK and international profile scaffolds, source display, synthetic de-id scan/redact, the NHS 999 fixture convention, synthetic run-chart analysis, static skill-guide frontmatter and safety anchors, absence of tracked generated artifacts, and the installed `qip-guru` / `qip` console command paths. See `docs/RELEASE_READINESS.md`.
+The smoke check proves UK and international profile scaffolds, source display, synthetic de-id scan/redact, the NHS 999 fixture convention, synthetic run-chart analysis, static skill-guide frontmatter and safety anchors, absence of tracked generated artifacts, and the installed `improvement-guru` console command path. See `docs/RELEASE_READINESS.md`.
 
 ## Architecture
 
-The repo is the kit. The `skills/` directory contains static agent skill guides for use in an agent context; they are not auto-loaded by an agent runtime. The `qip.py` CLI handles deterministic local file work. The `examples/` directory holds synthetic fixtures and demo QIP datasets. The `standards/` directory holds global and country source profiles. See `docs/ARCHITECTURE.md`.
+The repo is the kit. The `skills/` directory contains static agent skill guides for use in an agent context; they are not auto-loaded by an agent runtime. The `improvement_guru/cli.py` CLI handles deterministic local file work. The `examples/` directory holds synthetic fixtures and demo QIP datasets. The `standards/` directory holds global and country source profiles. See `docs/ARCHITECTURE.md`.
 
 ## Source Freshness
 

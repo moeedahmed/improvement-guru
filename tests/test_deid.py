@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from qip_guru.deid import redact_text, scan_text
+from improvement_guru.deid import redact_text, scan_text
 
 
 def test_scan_text_classifies_planted_identifiers_with_positions():
@@ -43,7 +43,7 @@ def test_redact_text_replaces_each_finding_without_touching_clean_text():
 
 
 def test_scan_file_redaction_does_not_modify_input(tmp_path):
-    from qip_guru.deid import redact_file
+    from improvement_guru.deid import redact_file
 
     source = tmp_path / "input.csv"
     output = tmp_path / "redacted.csv"
@@ -59,7 +59,7 @@ def test_scan_file_redaction_does_not_modify_input(tmp_path):
 
 
 def test_redact_file_refuses_unsafe_paths(tmp_path):
-    from qip_guru.deid import redact_file
+    from improvement_guru.deid import redact_file
 
     source = tmp_path / "input.txt"
     source.write_text("Synthetic NHS 999 000 0018", encoding="utf-8")

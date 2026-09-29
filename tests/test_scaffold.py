@@ -1,4 +1,4 @@
-from qip_guru.scaffold import create_project
+from improvement_guru.scaffold import create_project
 
 
 def test_create_project_writes_expected_scaffold_with_substitutions(tmp_path):
