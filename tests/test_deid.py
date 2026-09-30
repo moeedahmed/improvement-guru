@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import improvement_guru.deid as deid
 from improvement_guru.deid import redact_text, scan_text
 
 
@@ -151,3 +152,48 @@ def test_nhs_checksum_edge_cases():
 
     assert by_value["999 000 0000"] == "POSSIBLE_NHS_NUMBER"
     assert by_value["999 000 0050"] == "NHS_NUMBER"
+
+
+def test_non_ascii_digits_are_still_flagged_as_identifiers():
+    text = (
+        "unicode_date,١٢/٠٣/١٩٧٨\n"
+        "unicode_phone,٠٧١٢٣ ٤٥٦٧٨٩\n"
+        "unicode_nhs,٩٩٩ ٠٠٠ ٠٠١٨\n"
+        "mixed_nhs,999 ٠٠٠ 0050\n"
+    )
+
+    findings = scan_text(text)
+    by_value = {finding.value: finding.finding_type for finding in findings}
+
+    assert by_value == {
+        "١٢/٠٣/١٩٧٨": "DOB_LIKE_DATE",
+        "٠٧١٢٣ ٤٥٦٧٨٩": "UK_PHONE_NUMBER",
+        "٩٩٩ ٠٠٠ ٠٠١٨": "NHS_NUMBER",
+        "999 ٠٠٠ 0050": "NHS_NUMBER",
+    }
+    assert [finding.line for finding in findings] == [1, 2, 3, 4]
+    assert redact_text(text) == (
+        "unicode_date,[DOB_LIKE_DATE]\n"
+        "unicode_phone,[UK_PHONE_NUMBER]\n"
+        "unicode_nhs,[NHS_NUMBER]\n"
+        "mixed_nhs,[NHS_NUMBER]\n"
+    )
+
+
+def test_normalised_digits_maps_non_ascii_digits_to_ascii():
+    assert deid._normalised_digits("1١2٢3٣") == "112233"
+    assert deid._normalised_digits("²") == ""
+
+
+def test_dob_like_dates_use_full_calendar_bounds(monkeypatch):
+    class FixedDate(deid.date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 9, 3)
+
+    monkeypatch.setattr(deid, "date", FixedDate)
+    text = "lower,01/01/1900\ntoday,2026-09-03\nfuture,04/09/2026\n"
+
+    values = {finding.value for finding in scan_text(text)}
+
+    assert values == {"01/01/1900", "2026-09-03"}
