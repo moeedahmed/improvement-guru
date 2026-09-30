@@ -3,8 +3,8 @@ import re
 
 import pytest
 
-import qip_guru.sources as sources_module
-from qip_guru.sources import format_profile, list_profiles, load_profile, source_map_markdown
+import improvement_guru.sources as sources_module
+from improvement_guru.sources import format_profile, list_profiles, load_profile, source_map_markdown
 
 
 def valid_profile():

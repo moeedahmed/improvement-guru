@@ -1,10 +1,10 @@
 # Release Readiness Gate
 
-This gate is for shaping QIP Guru toward a public-safe release. Passing it does not mean the project is published, clinically approved, or safe for real patient data.
+This gate is for shaping Improvement Guru toward a public-safe release. Passing it does not mean the project is published, clinically approved, or safe for real patient data.
 
 ## Current Product Verdict
 
-QIP Guru is the public brand and repo/toolkit. The current release shape is:
+Improvement Guru is the public brand and repo/toolkit. The current release shape is:
 
 - repo/toolkit: yes
 - static skills: yes
@@ -33,7 +33,7 @@ Run from the repo root:
 
 ```bash
 python3 -m pytest -q
-python3 -m compileall qip.py qip_guru tests scripts
+python3 -m compileall improvement_guru tests scripts
 python3 scripts/release_check.py --install-smoke
 python3 scripts/check_sources.py --dry-run
 ```
@@ -59,7 +59,7 @@ The release smoke check must demonstrate all of the following without real patie
 - Redacted output written to a new file without modifying the input.
 - Static agent skill guides present with parseable `name`/`description` frontmatter plus source-profile and safety pause anchors.
 - No generated artifacts are tracked by `git ls-files`.
-- Local install smoke in a temporary venv, proving the packaged `qip-guru` and `qip` console commands can find installed data files and run outside the source tree.
+- Local install smoke in a temporary venv, proving the packaged `improvement-guru` console command can find installed data files and run outside the source tree.
 
 Equivalent release-smoke command:
 
@@ -73,10 +73,10 @@ python3 scripts/release_check.py --install-smoke
 
 Before any external/public action, verify:
 
-- public repo/toolkit name: QIP Guru
-- Python distribution name: `qip-guru`
-- Python import package: `qip_guru`
-- CLI commands: `qip-guru` and `qip`
+- public repo/toolkit name: Improvement Guru
+- Python distribution name: `improvement-guru`
+- Python import package: `improvement_guru`
+- CLI command: `improvement-guru`
 - no `.egg-info`, cache, build, dist, venv, or generated smoke-output files are included
 - no valid-checksum NHS fixture number outside the `999` test range is included
 - no real patient, staff, organisation-sensitive, or incident-identifiable data is included
@@ -84,7 +84,7 @@ Before any external/public action, verify:
 
 ## Public Release Checklist
 
-- [ ] README leads with QIP Guru positioning and no-engine boundary.
+- [ ] README leads with Improvement Guru positioning and no-engine boundary.
 - [ ] `SAFETY.md` says the kit is educational and not reliable de-identification for real patient data.
 - [ ] `docs/PRODUCT_POSITIONING.md` is current.
 - [ ] Source profile URLs have been re-checked and `checked_on` dates updated where needed.
@@ -94,7 +94,7 @@ Before any external/public action, verify:
 - [ ] Synthetic run-chart examples are included and do not imply live clinical performance benchmarking.
 - [ ] No generated `.egg-info`, cache, build, or virtual environment files are included in the release diff.
 - [ ] Tests, compileall, source dry-run, and install smoke pass locally.
-- [ ] Package/distribution naming is `qip-guru`; import remains `qip_guru`; CLI commands are `qip-guru` and `qip`.
+- [ ] Package/distribution naming is `improvement-guru`; import remains `improvement_guru`; CLI command is `improvement-guru`.
 - [ ] Founder/product review has approved public copy.
 - [ ] Medic/clinical safety review has approved boundaries and non-claims.
 

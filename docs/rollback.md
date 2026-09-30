@@ -1,6 +1,6 @@
-# Rollback — QIP Guru
+# Rollback — Improvement Guru
 
-QIP Guru is distributed as a versioned PyPI/GitHub package (`qip`/`qip-guru`
+Improvement Guru is distributed as a versioned PyPI/GitHub package (`improvement-guru`
 console entry points), not a hosted service. There is no live deployment,
 database, or bot to roll back — "rollback" here means reverting a bad
 release or a bad commit on `main`.
@@ -15,7 +15,7 @@ git revert <bad-commit-sha>    # new commit that undoes it, never rewrite histor
 
 ## Bad published release (PyPI / GitHub release)
 
-QIP Guru has no auto-update or live install; users pin a version. There is
+Improvement Guru has no auto-update or live install; users pin a version. There is
 no in-place "unpublish" story:
 
 1. Do not delete or overwrite the bad release artifact/tag.
@@ -26,7 +26,7 @@ no in-place "unpublish" story:
 
 ## No migrations to roll back
 
-QIP Guru owns no database and applies no schema migrations (see
+Improvement Guru owns no database and applies no schema migrations (see
 "Migration safety" in `AGENTS.md`) — there is never a migration-rollback
 step.
 

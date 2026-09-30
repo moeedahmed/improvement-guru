@@ -1,11 +1,10 @@
 # Changelog
 
-All notable changes to QIP Guru will be documented here.
+All notable changes to Improvement Guru will be documented here.
 
 ## 0.1.0rc1 - Unreleased
 
-- Defines QIP Guru as the public brand and open-source toolkit.
-- Uses `qip-guru` as the Python distribution name, `qip_guru` as the import package, and both `qip-guru` and `qip` as CLI commands.
+- Renames the product from QIP Guru to Improvement Guru: distribution `improvement-guru`, import package `improvement_guru`, CLI `improvement-guru` (the `qip` command and `qip.py` script are replaced by `improvement-guru` and `python3 -m improvement_guru`).
 - Includes global, UK, US, Canadian, and Australian source profiles.
 - Includes static agent skill guides for QIP planning, PDSA, audit standards, SMART aims, and incident-learning triage.
 - Includes synthetic ED flow, sepsis documentation, and analgesia-time demo datasets.

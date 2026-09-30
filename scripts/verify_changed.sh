@@ -20,7 +20,7 @@ echo "== verify:changed -- pytest =="
 python3 -m pytest -q
 
 echo "== verify:changed -- compileall =="
-python3 -m compileall qip.py qip_guru tests scripts
+python3 -m compileall improvement_guru tests scripts
 
 echo "== verify:changed -- release_check (no install-smoke) =="
 python3 scripts/release_check.py

@@ -1,6 +1,6 @@
 # Security Policy
 
-QIP Guru is a local educational scaffold, not a patient-data processing service.
+Improvement Guru is a local educational scaffold, not a patient-data processing service.
 
 ## Supported Versions
 

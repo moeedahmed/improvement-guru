@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-import qip_guru.paths as paths
+import improvement_guru.paths as paths
 
 
 def set_data_roots(monkeypatch, tmp_path):

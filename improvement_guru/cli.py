@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""QIP Guru command line interface."""
+"""Improvement Guru command line interface."""
 
 from __future__ import annotations
 
@@ -7,10 +6,10 @@ import argparse
 from pathlib import Path
 import sys
 
-from qip_guru.charts import analyse_run_chart_csv
-from qip_guru.deid import redact_file, scan_file
-from qip_guru.scaffold import create_project
-from qip_guru.sources import format_profile, list_profiles, load_profile
+from improvement_guru.charts import analyse_run_chart_csv
+from improvement_guru.deid import redact_file, scan_file
+from improvement_guru.scaffold import create_project
+from improvement_guru.sources import format_profile, list_profiles, load_profile
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -44,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="qip",
+        prog="improvement-guru",
         description="Public-safe QIP scaffold and deterministic assistive de-id helper.",
     )
     subparsers = parser.add_subparsers(dest="command")

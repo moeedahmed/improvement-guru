@@ -4,7 +4,7 @@
 #
 # Adds:
 #   - release_check.py --install-smoke: installs this checkout into a fresh,
-#     network-isolated venv and drives the packaged `qip`/`qip-guru` console
+#     network-isolated venv and drives the packaged `improvement-guru` console
 #     entry points end to end (sources list, scaffold, deid scan/redact,
 #     run-chart) -- the only proof that the packaging metadata in
 #     pyproject.toml actually produces a working install, not just working
