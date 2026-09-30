@@ -43,24 +43,28 @@ def scan_text(text: str) -> list[Finding]:
     """Return deterministic findings with 1-based line and column positions."""
 
     raw: list[tuple[int, int, str, str]] = []
+    # Match on an ASCII-digit copy so identifiers written with non-ASCII digits
+    # (for example Arabic-Indic) are still flagged; it has the same length as
+    # the original, so match positions index the original text unchanged.
+    matchable = _ascii_digits(text)
 
-    for match in EMAIL_RE.finditer(text):
+    for match in EMAIL_RE.finditer(matchable):
         raw.append((match.start(), match.end(), "EMAIL_ADDRESS", _mask_email(match.group(0))))
 
-    for match in POSTCODE_RE.finditer(text):
+    for match in POSTCODE_RE.finditer(matchable):
         raw.append((match.start(), match.end(), "UK_POSTCODE", _mask_postcode(match.group(0))))
 
-    for match in DATE_RE.finditer(text):
+    for match in DATE_RE.finditer(matchable):
         value = match.group(0)
         if _is_valid_dob_like_date(value):
             raw.append((match.start(), match.end(), "DOB_LIKE_DATE", _mask_date(value)))
 
-    for match in PHONE_RE.finditer(text):
+    for match in PHONE_RE.finditer(matchable):
         value = match.group(0)
         if _normalised_digits(value).startswith(("0", "44")):
             raw.append((match.start(), match.end(), "UK_PHONE_NUMBER", _mask_phone(value)))
 
-    for match in NHS_RE.finditer(text):
+    for match in NHS_RE.finditer(matchable):
         value = match.group(0)
         digits = _normalised_digits(value)
         if len(digits) == 10:
@@ -158,8 +162,16 @@ def _non_overlapping(raw: list[tuple[int, int, str, str]]) -> list[tuple[int, in
     return sorted(accepted, key=lambda item: (item[0], item[1], item[2]))
 
 
+def _ascii_digits(value: str) -> str:
+    """Map every Unicode decimal digit to its ASCII digit, keeping the length unchanged."""
+
+    if value.isascii():
+        return value
+    return "".join(str(int(char)) if char.isdecimal() else char for char in value)
+
+
 def _normalised_digits(value: str) -> str:
-    return "".join(char for char in value if char.isdigit())
+    return "".join(char for char in _ascii_digits(value) if char in "0123456789")
 
 
 def _has_valid_nhs_checksum(digits: str) -> bool:
@@ -186,7 +198,7 @@ def _is_valid_dob_like_date(value: str) -> bool:
         parsed = date(year, month, day)
     except (ValueError, IndexError):
         return False
-    return 1900 <= parsed.year <= date.today().year
+    return date(1900, 1, 1) <= parsed <= date.today()
 
 
 def _mask_phone(value: str) -> str:
