@@ -2,7 +2,7 @@
 
 All notable changes to Improvement Guru will be documented here.
 
-## 0.1.0rc1 - Unreleased
+## 0.1.0 - 2026-10-13 (draft, unpublished)
 
 - Renames the product from QIP Guru to Improvement Guru: distribution `improvement-guru`, import package `improvement_guru`, CLI `improvement-guru` (the `qip` command and `qip.py` script are replaced by `improvement-guru` and `python3 -m improvement_guru`).
 - Includes global, UK, US, Canadian, and Australian source profiles.
@@ -15,5 +15,6 @@ All notable changes to Improvement Guru will be documented here.
 - Adds parseable frontmatter to static agent skill guides.
 - Adds local release checks for scaffolding, source profiles, synthetic de-id proof, NHS fixture range checks, run-chart proof, skill-guide frontmatter/safety anchors, tracked generated artifacts, and installed console-command smoke testing.
 - Adds GitHub Actions CI, a bug-report template, and a code of conduct.
+- Refreshes source-profile verified dates from the 2026-10-01 source audit (docs/source-freshness-audit-2026-10-01.md); four sources (NSQHS, SQUIRE, AHRQ Quality Indicators toolkit, TeamSTEPPS) could not be re-checked directly and keep their earlier dates.
 
-No public package publication, repository creation, deployment, or external announcement has happened in this release-candidate pass.
+No PyPI upload or external announcement has happened in this pass.

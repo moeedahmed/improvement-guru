@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "improvement-guru"
-version = "0.1.0rc1"
+version = "0.1.0"
 description = "Improvement Guru: agent-native local-first healthcare QI scaffolds, source profiles, static skill guides, synthetic examples, and deterministic safety checks."
 readme = "README.md"
 requires-python = ">=3.11"

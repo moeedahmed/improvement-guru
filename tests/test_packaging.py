@@ -9,7 +9,7 @@ def test_public_distribution_identity_matches_release_decision():
     pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
 
     assert pyproject["project"]["name"] == "improvement-guru"
-    assert pyproject["project"]["version"] == "0.1.0rc1"
+    assert pyproject["project"]["version"] == "0.1.0"
     assert pyproject["project"]["scripts"] == {"improvement-guru": "improvement_guru.cli:main"}
     assert pyproject["tool"]["setuptools"]["packages"]["find"]["include"] == ["improvement_guru*"]
     assert set(pyproject["tool"]["setuptools"]["data-files"]) == {

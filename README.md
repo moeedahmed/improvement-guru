@@ -21,7 +21,7 @@ improvement-guru sources list
 improvement-guru new uk_demo --profile uk
 ```
 
-> Release state: `0.1.0rc1` public release candidate. Improvement Guru is not on PyPI yet; install from a checkout for now.
+> Release state: `0.1.0` first public release. Improvement Guru is not on PyPI yet; install from a checkout for now.
 
 ## Why Improvement Guru
 
