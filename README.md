@@ -55,7 +55,7 @@ This is an educational scaffold. It is not an information governance tool of rec
 - Local CLI: included as `improvement-guru` and `python3 -m improvement_guru`.
 - Engine: not yet. There is no hosted runtime, model orchestration layer, MCP server, dashboard, or background service.
 
-See `docs/PRODUCT_POSITIONING.md` for naming and non-claim guidance.
+See `docs/PRODUCT_POSITIONING.md` for naming and non-claim guidance. Agents and schedulers should read `docs/AGENT_INTERFACE.md` for every command, its inputs, outputs and exit codes, and how to pin a tagged release.
 
 ## Requirements
 
