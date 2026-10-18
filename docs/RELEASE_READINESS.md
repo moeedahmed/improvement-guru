@@ -2,6 +2,8 @@
 
 This gate is for shaping Improvement Guru toward a public-safe release. Passing it does not mean the project is published, clinically approved, or safe for real patient data.
 
+Follow the [release process](RELEASE_PROCESS.md) for the branch-to-PR route, required CI checks and release permission.
+
 ## Current Product Verdict
 
 Improvement Guru is the public brand and repo/toolkit. The current release shape is:
