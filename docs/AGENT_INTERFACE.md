@@ -46,3 +46,24 @@ Finding types: `NHS_NUMBER`, `POSSIBLE_NHS_NUMBER`, `UK_POSTCODE`, `DOB_LIKE_DAT
 ## Static skill guides
 
 `skills/*.md` are guide files an agent can copy whole into its own skill directory. They are not auto-loaded and contain no executable logic.
+
+## Connection test and example answers
+
+`tests/test_agent_interface.py` drives the real command line the way an agent does and checks every documented exit code, stdout shape and `Error: ...` message against the good example answers in `tests/golden/agent_answers.json`. It is offline, uses only the synthetic examples, and runs in `./scripts/verify_changed.sh` and CI. If a command's output changes on purpose, update this page and that file together.
+
+## Failure alerts
+
+The engine has no service, so it sends no alerts itself. The agent that calls it turns a non-success result into an alert in the project that owns the product, with this plain header. Where alerts go is the agent's one shared setting, not an engine setting.
+
+| Header line | Fill with |
+| --- | --- |
+| Product | `Improvement Guru` and the pinned version |
+| What happened | The command run and its `Error: ...` line from stderr |
+| Users affected | `No` for an input error (exit 2) the caller can correct; `Yes` if the same command fails for every input after a version change |
+| Suggested fix | Exit 2: correct the input named in the message. A run that fails after a version bump: go back to the last good tag in `docs/rollback.md` |
+
+`deid scan` exit 1 means findings were reported. That is a normal result to hand to the user, not a failure.
+
+## No crash reporting
+
+Improvement Guru sends nothing off the machine: no telemetry and no crash reports. That is a public promise, so no error tracker (such as Sentry) is added to the engine. Failures reach the owner only through the calling agent's alert above, or a GitHub issue the user chooses to file.

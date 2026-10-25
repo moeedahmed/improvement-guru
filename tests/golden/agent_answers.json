@@ -1,0 +1,65 @@
+[
+  {
+    "id": "sources-list",
+    "args": ["sources", "list"],
+    "exit_code": 0,
+    "stdout_regex": "^australia\\tAustralia\\ncanada\\tCanada\\nglobal\\tGlobal Core\\nuk\\tUnited Kingdom\\nus\\tUnited States\\n$",
+    "stderr_regex": "^$"
+  },
+  {
+    "id": "sources-show-unknown-profile",
+    "args": ["sources", "show", "nope"],
+    "exit_code": 2,
+    "stdout_regex": "^$",
+    "stderr_regex": "^Error: unknown source profile 'nope'\\. Available profiles: australia, canada, global, uk, us\\n$"
+  },
+  {
+    "id": "new-global-scaffold",
+    "args": ["new", "{tmp}/demo", "--profile", "global"],
+    "exit_code": 0,
+    "stdout_regex": "demo[\\\\/]source-map\\.md",
+    "stderr_regex": "^$"
+  },
+  {
+    "id": "deid-scan-finds-synthetic-identifiers",
+    "args": ["deid", "scan", "{examples}/synthetic_ward_audit.csv"],
+    "exit_code": 1,
+    "stdout_regex": "(?m)^\\d+:\\d+\\tNHS_NUMBER\\t.+$",
+    "stderr_regex": "^$"
+  },
+  {
+    "id": "deid-redact-then-refuse-overwrite",
+    "args": ["deid", "redact", "{examples}/synthetic_ward_audit.csv", "--out", "{tmp}/redacted.csv"],
+    "exit_code": 0,
+    "stdout_regex": "redacted\\.csv\\n$",
+    "stderr_regex": "^$"
+  },
+  {
+    "id": "deid-redact-existing-output",
+    "args": ["deid", "redact", "{examples}/synthetic_ward_audit.csv", "--out", "{tmp}/redacted.csv"],
+    "exit_code": 2,
+    "stdout_regex": "^$",
+    "stderr_regex": "^Error: output file already exists: .*redacted\\.csv\\n$"
+  },
+  {
+    "id": "deid-scan-redacted-copy-is-clean",
+    "args": ["deid", "scan", "{tmp}/redacted.csv"],
+    "exit_code": 0,
+    "stdout_regex": "^No supported identifier patterns found\\.\\n$",
+    "stderr_regex": "^$"
+  },
+  {
+    "id": "run-chart-reports-shift",
+    "args": ["charts", "run-chart", "{examples}/synthetic_ed_flow_qip.csv", "--value-column", "median_time_to_initial_assessment_minutes", "--date-column", "week", "--out", "{tmp}/ed_flow_annotated.csv"],
+    "exit_code": 0,
+    "stdout_regex": "ed_flow_annotated\\.csv\\trows=\\d+\\tmedian=[\\d.]+\\tshifts=[1-9]\\d*\\ttrends=\\d+\\n$",
+    "stderr_regex": "^$"
+  },
+  {
+    "id": "run-chart-missing-column",
+    "args": ["charts", "run-chart", "{examples}/synthetic_ed_flow_qip.csv", "--value-column", "not_a_column", "--out", "{tmp}/never.csv"],
+    "exit_code": 2,
+    "stdout_regex": "^$",
+    "stderr_regex": "^Error: value column not found: not_a_column\\n$"
+  }
+]
