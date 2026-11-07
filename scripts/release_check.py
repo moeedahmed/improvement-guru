@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT))
 from improvement_guru.deid import redact_file, scan_file  # noqa: E402
 from improvement_guru.charts import analyse_run_chart_csv  # noqa: E402
 from improvement_guru.scaffold import create_project  # noqa: E402
+from improvement_guru.project import edit_record, load_record, next_step, count_analysis  # noqa: E402
 from improvement_guru.sources import format_profile, list_profiles, load_profile  # noqa: E402
 
 
@@ -124,6 +125,18 @@ def run_release_checks(workdir: str | Path) -> list[str]:
         if "local governance" not in source_text:
             raise AssertionError(f"source map missing local governance boundary for {profile_id}")
         proof.append(f"scaffold: {profile_id} -> {project_dir}")
+
+    project_dir = base / "uk_synthetic_demo"
+    record = load_record(project_dir)
+    if record["route"] is not None or "Confirm with your local" not in next_step(record)[0]:
+        raise AssertionError("new project must require local route confirmation")
+    with edit_record(project_dir) as record:
+        record["aim"] = "Synthetic completion improves within eight weeks"
+    if load_record(project_dir)["aim"] != record["aim"]:
+        raise AssertionError("project record did not round-trip")
+    if count_analysis(record) != ["too few points (0 of at least 10) to call a signal"]:
+        raise AssertionError("empty project counts must not report signals")
+    proof.append("project-record: atomic edit, round-trip, route confirmation and count gate ok")
 
     uk_source_map = (base / "uk_synthetic_demo" / "source-map.md").read_text(encoding="utf-8")
     if "Patient Safety Incident Response Framework" not in uk_source_map:
