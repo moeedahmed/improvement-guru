@@ -147,6 +147,8 @@ def _annotate_rows(
     baseline_median: float,
     run_length: int,
     trend_length: int,
+    *,
+    skip_ties: bool = False,
 ) -> list[dict[str, str]]:
     annotated: list[dict[str, str]] = []
     current_side = ""
@@ -158,8 +160,9 @@ def _annotate_rows(
     for index, (row, value) in enumerate(zip(rows, values, strict=True), start=1):
         side = _side(value, baseline_median)
         if side == "on_median":
-            current_side = ""
-            current_side_count = 0
+            if not skip_ties:
+                current_side = ""
+                current_side_count = 0
         elif side == current_side:
             current_side_count += 1
         else:
@@ -167,8 +170,9 @@ def _annotate_rows(
             current_side_count = 1
 
         if previous_value is None or value == previous_value:
-            trend_direction = ""
-            trend_count = 1
+            if previous_value is None or not skip_ties:
+                trend_direction = ""
+                trend_count = 1
         else:
             direction = "up" if value > previous_value else "down"
             if direction == trend_direction:
@@ -176,7 +180,6 @@ def _annotate_rows(
             else:
                 trend_direction = direction
                 trend_count = 2
-        previous_value = value
 
         annotated_row = dict(row)
         annotated_row.update(
@@ -186,13 +189,14 @@ def _annotate_rows(
                 "qip_baseline_median": _format_number(baseline_median),
                 "qip_side": side,
                 "qip_run_length": str(current_side_count),
-                "qip_shift_signal": "yes" if current_side_count >= run_length else "no",
+                "qip_shift_signal": "yes" if side != "on_median" and current_side_count >= run_length else "no",
                 "qip_trend_direction": trend_direction,
                 "qip_trend_length": str(trend_count),
-                "qip_trend_signal": "yes" if trend_count >= trend_length else "no",
+                "qip_trend_signal": "yes" if trend_count >= trend_length and (not skip_ties or value != previous_value) else "no",
             }
         )
         annotated.append(annotated_row)
+        previous_value = value
     return annotated
 
 
@@ -208,3 +212,43 @@ def _format_number(value: float) -> str:
     if value.is_integer():
         return str(int(value))
     return f"{value:.6g}"
+
+
+RUN_CHART_CAUTION = (
+    "A signal means variation unlikely to be chance, not proof that the change caused it. "
+    "This is a run chart, not SPC."
+)
+
+
+def analyse_series(values: list[float], labels: list[str]) -> list[str]:
+    """Describe project signals using the median, skipped ties and a ten-point gate."""
+    if len(values) != len(labels):
+        raise ValueError("each point must have a label")
+    if any(not math.isfinite(value) for value in values):
+        raise ValueError("points must be finite numbers")
+    centre = float(median(values)) if values else 0.0
+    usable = sum(value != centre for value in values)
+    if usable < 10:
+        return [f"too few points ({usable} of at least 10) to call a signal"]
+    rows = _annotate_rows([{} for _ in values], values, centre, 6, 5, skip_ties=True)
+    signals = []
+    for index, row in enumerate(rows):
+        if row["qip_shift_signal"] == "yes":
+            count = int(row["qip_run_length"])
+            if count == 6:
+                indices = [i for i in range(index + 1) if values[i] != centre]
+                start = indices[-count]
+                signals.append(
+                    f"Shift signal: {count} points {row['qip_side']} the median "
+                    f"(weeks {labels[start]} to {labels[index]})"
+                )
+        if row["qip_trend_signal"] == "yes":
+            count = int(row["qip_trend_length"])
+            if count == 5:
+                indices = [0] + [i for i in range(1, index + 1) if values[i] != values[i - 1]]
+                start = indices[-count]
+                signals.append(
+                    f"Trend signal: {count} points going {row['qip_trend_direction']} "
+                    f"(weeks {labels[start]} to {labels[index]})"
+                )
+    return [f"Median centre line: {centre:g}", *(signals or ["No Shift or Trend signal found."])]

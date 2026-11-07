@@ -6,7 +6,8 @@ import argparse
 from pathlib import Path
 import sys
 
-from improvement_guru.charts import analyse_run_chart_csv
+from improvement_guru.charts import RUN_CHART_CAUTION, analyse_run_chart_csv
+from improvement_guru import project
 from improvement_guru.deid import redact_file, scan_file
 from improvement_guru.scaffold import create_project
 from improvement_guru.sources import format_profile, list_profiles, load_profile
@@ -16,6 +17,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
+    if args.command == "project":
+        return _run_project(args)
     if args.command == "new":
         return _run_new(args.project_name, args.profile)
     if args.command == "deid" and args.deid_command == "scan":
@@ -84,13 +87,104 @@ def _build_parser() -> argparse.ArgumentParser:
     run_chart_parser.add_argument("--run-length", type=int, default=6, help="points on one side of median for shift signal")
     run_chart_parser.add_argument("--trend-length", type=int, default=5, help="consecutive increasing/decreasing points for trend signal")
 
+    project_parser = subparsers.add_parser("project", help="edit a local project record or find the next step")
+    commands = project_parser.add_subparsers(dest="project_command", required=True)
+    for command in ("set-aim", "add-measure", "add-pdsa", "close-pdsa", "set-route", "set-stage", "next", "add-counts"):
+        child = commands.add_parser(command)
+        child.add_argument("directory", nargs="?" if command == "next" else None, default=".")
+        if command == "set-aim":
+            child.add_argument("--aim", required=True)
+        elif command == "add-measure":
+            child.add_argument("--name", required=True)
+            child.add_argument("--kind", choices=project.KINDS, required=True)
+            child.add_argument("--definition", default="")
+        elif command == "add-pdsa":
+            child.add_argument("--change-idea", required=True)
+            child.add_argument("--prediction", required=True)
+        elif command == "close-pdsa":
+            child.add_argument("--id", type=int, required=True)
+            child.add_argument("--result", required=True)
+            child.add_argument("--decision", choices=project.DECISIONS[:-1], required=True)
+        elif command == "set-route":
+            child.add_argument("--route", choices=project.ROUTES, required=True)
+        elif command == "set-stage":
+            child.add_argument("--stage", choices=project.STAGES, required=True)
+        elif command == "add-counts":
+            child.add_argument("--week", required=True)
+            child.add_argument("--numerator", type=int, required=True)
+            child.add_argument("--denominator", type=int, required=True)
+
     return parser
+
+
+def _run_project(args: argparse.Namespace) -> int:
+    try:
+        if args.project_command == "next":
+            step, reason = project.next_step(project.load_record(args.directory))
+            print(step)
+            print(f"Reason: {reason}")
+            print(project.DISCLAIMER)
+            return 0
+        if args.project_command == "add-counts":
+            project.check_identifiers(args.directory)
+        with project.edit_record(args.directory) as record:
+            _edit_project(record, args)
+            if args.project_command == "add-counts":
+                project.check_record_identifiers(record)
+                analysis = project.count_analysis(record)
+        if args.project_command == "add-counts":
+            print(f"Weekly proportion: {args.numerator / args.denominator:g}")
+            for line in analysis:
+                print(line)
+            print(RUN_CHART_CAUTION)
+        else:
+            print("Project record saved.")
+        return 0
+    except project.IdentifierRefusal as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    except (ValueError, OSError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
+
+
+def _edit_project(record: dict, args: argparse.Namespace) -> None:
+    command = args.project_command
+    if command == "set-aim":
+        if not args.aim.strip():
+            raise ValueError("aim must be non-empty text")
+        record["aim"] = args.aim
+    elif command == "set-route":
+        record["route"] = args.route
+    elif command == "set-stage":
+        record["stage"] = args.stage
+    elif command == "add-measure":
+        for measure in record["measures"]:
+            if (measure["name"], measure["kind"]) == (args.name, args.kind):
+                measure["definition"] = args.definition
+                break
+        else:
+            record["measures"].append(dict(name=args.name, kind=args.kind, definition=args.definition))
+    elif command == "add-pdsa":
+        cycle_id = max((cycle["id"] for cycle in record["pdsa_cycles"]), default=0) + 1
+        record["pdsa_cycles"].append(
+            dict(id=cycle_id, change_idea=args.change_idea,
+                 prediction=args.prediction, result="", decision="open")
+        )
+    elif command == "close-pdsa":
+        cycle = next((cycle for cycle in record["pdsa_cycles"] if cycle["id"] == args.id), None)
+        if cycle is None or cycle["decision"] != "open":
+            raise ValueError("PDSA id must identify an open cycle")
+        cycle.update(result=args.result, decision=args.decision)
+    elif command == "add-counts":
+        project.validate_counts(args.numerator, args.denominator)
+        record["weekly_counts"].append(dict(week=args.week, numerator=args.numerator, denominator=args.denominator))
 
 
 def _run_new(project_name: str, profile: str) -> int:
     try:
         created = create_project(Path(project_name), Path(project_name).name, profile_id=profile)
-    except (FileExistsError, ValueError) as exc:
+    except (OSError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 2
     for path in created:

@@ -9,6 +9,7 @@ def test_create_project_writes_expected_scaffold_with_substitutions(tmp_path):
     created = create_project(project_dir, "demo_qip_project", date="2026-07-04")
 
     expected_files = {
+        "project.json",
         "charter.md",
         "pdsa-log.md",
         "driver-diagram.md",
