@@ -84,6 +84,24 @@ Before any external/public action, verify:
 - no real patient, staff, organisation-sensitive, or incident-identifiable data is included
 - `python3 scripts/release_check.py --install-smoke` passes in the extracted checkout
 
+## Launch Lessons
+
+Three lessons carried over from Teaching Guru launches. They apply to every
+Improvement Guru tag or GitHub release.
+
+1. **One release at a time.** Only one tag or GitHub release is in progress at
+   once. Do not start a second until the first is published and checked live,
+   or rolled back with the [rollback playbook](rollback.md). Overlapping
+   releases left a Teaching Guru release stuck on hold.
+2. **Readiness check before launch.** This gate is the readiness check. Run the
+   required local proof and tick every item in the checklist below on the exact
+   release commit, on the day of release. An unticked item blocks the release;
+   a check written down but not run does not count.
+3. **Done means users actually got it.** A release is done only when a user can
+   get it: the GitHub release page is public, and a fresh install from the
+   published tag runs `improvement-guru --help` and the synthetic demo outside
+   the source tree. A created tag or green CI alone is not done.
+
 ## Public Release Checklist
 
 - [ ] README leads with Improvement Guru positioning and no-engine boundary.
@@ -99,6 +117,9 @@ Before any external/public action, verify:
 - [ ] Package/distribution naming is `improvement-guru`; import remains `improvement_guru`; CLI command is `improvement-guru`.
 - [ ] Founder/product review has approved public copy.
 - [ ] Medic/clinical safety review has approved boundaries and non-claims.
+- [ ] No other tag or GitHub release is in progress (launch lesson 1).
+- [ ] Every item in this checklist was checked on the exact release commit today (launch lesson 2).
+- [ ] After publishing: the release page is public and a fresh install from the published tag runs outside the source tree (launch lesson 3).
 
 ## Remaining Before Public Release
 
