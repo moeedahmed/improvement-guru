@@ -8,6 +8,7 @@ def test_release_check_exercises_public_safe_launch_proof(tmp_path):
 
     proof = run_release_checks(workdir)
 
+    assert any(line.startswith("project-record:") for line in proof)
     assert any(line.startswith("profiles:") for line in proof)
     assert any("scaffold: uk" in line for line in proof)
     assert any("scaffold: global" in line for line in proof)

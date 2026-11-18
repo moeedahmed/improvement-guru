@@ -108,3 +108,61 @@ def test_run_chart_refuses_to_overwrite_existing_output(tmp_path):
         analyse_run_chart_csv(input_path, output_path, value_column="value")
 
     assert output_path.read_text(encoding="utf-8") == "keep me\n"
+
+
+@pytest.mark.parametrize("length, expected", [(5, False), (6, True)])
+def test_project_shift_threshold(length, expected):
+    from improvement_guru.charts import analyse_series
+
+    values = [0] * length + [2] * length
+    lines = analyse_series(values, [str(i) for i in range(len(values))])
+    assert any("Shift signal:" in line for line in lines) is expected
+
+
+def test_project_shift_skips_median_without_breaking_run():
+    from improvement_guru.charts import analyse_series
+
+    values = [0] * 6 + [1] + [2] * 6
+    lines = analyse_series(values, [str(i) for i in range(len(values))])
+    assert "Shift signal: 6 points above the median (weeks 7 to 12)" in lines
+    values = [0, 0, 1, 0, 0, 1, 0, 0] + [2] * 6
+    lines = analyse_series(values, [str(i) for i in range(len(values))])
+    assert "Shift signal: 6 points below the median (weeks 0 to 7)" in lines
+
+
+@pytest.mark.parametrize("length, expected", [(4, False), (5, True)])
+@pytest.mark.parametrize("descending", [False, True])
+def test_project_trend_threshold_and_equal_values(length, expected, descending):
+    from improvement_guru.charts import analyse_series
+
+    values = [0, 9] * 5 + [2] * 2 + list(range(3, length + 2))
+    if descending:
+        values = [-value for value in values]
+    lines = analyse_series(values, [str(i) for i in range(len(values))])
+    trends = [line for line in lines if "Trend signal:" in line]
+    assert bool(trends) is expected
+    if expected:
+        assert f"going {'down' if descending else 'up'}" in trends[0]
+        assert "weeks 10 to 15" in trends[0]
+
+
+def test_project_ten_usable_points_gate_drops_median():
+    from improvement_guru.charts import analyse_series
+
+    values = list(range(9)) + [4] * 20
+    assert analyse_series(values, [str(i) for i in range(len(values))]) == [
+        "too few points (8 of at least 10) to call a signal"
+    ]
+    assert analyse_series([], []) == ["too few points (0 of at least 10) to call a signal"]
+
+
+def test_legacy_csv_ties_still_reset_without_ten_point_gate(tmp_path):
+    source = _write_csv(tmp_path / "ties.csv", "value\n0\n0\n1\n0\n0\n0\n")
+    destination = tmp_path / "out.csv"
+    result = analyse_run_chart_csv(source, destination, value_column="value", baseline_points=3, run_length=2)
+    with destination.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    assert result.row_count == 6
+    assert rows[0]["qip_side"] == "on_median"
+    assert rows[1]["qip_run_length"] == "0"
+    assert rows[1]["qip_trend_length"] == "1"

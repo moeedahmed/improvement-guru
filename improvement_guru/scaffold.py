@@ -8,6 +8,7 @@ from datetime import date as date_type
 from pathlib import Path
 
 from improvement_guru.paths import data_path
+from improvement_guru.project import new_record, write_record
 from improvement_guru.sources import load_profile, source_map_markdown
 
 
@@ -105,6 +106,11 @@ def create_project(
         source_map = target / "source-map.md"
         _write_new_file(source_map, source_map_markdown(profile), created_files)
         created.append(source_map)
+        record_path = target / "project.json"
+        write_record(target, new_record(rendered_name, rendered_date))
+        record_stat = record_path.lstat()
+        created_files.append((record_path, record_stat.st_dev, record_stat.st_ino))
+        created.append(record_path)
     except Exception:
         for path, device, inode in reversed(created_files):
             _remove_created_file(path, device, inode)
