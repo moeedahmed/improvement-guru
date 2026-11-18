@@ -1,7 +1,7 @@
 # Rollback — Improvement Guru
 
-Improvement Guru is distributed as a versioned PyPI/GitHub package (`improvement-guru`
-console entry points), not a hosted service. There is no live deployment,
+Improvement Guru is distributed as a versioned GitHub release, installed from its tag (`improvement-guru`
+console entry points); it is not on PyPI, not a hosted service. There is no live deployment,
 database, or bot to roll back — "rollback" here means reverting a bad
 release or a bad commit on `main`.
 
@@ -27,7 +27,7 @@ no in-place "unpublish" story:
 ## No migrations to roll back
 
 Improvement Guru owns no database and applies no schema migrations (see
-"Migration safety" in `AGENTS.md`) — there is never a migration-rollback
+"Change safety gate" in `AGENTS.md`, last paragraph) — there is never a migration-rollback
 step.
 
 ## Fast checklist

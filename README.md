@@ -3,7 +3,7 @@
 [![CI](https://github.com/moeedahmed/improvement-guru/actions/workflows/ci.yml/badge.svg)](https://github.com/moeedahmed/improvement-guru/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-release%20candidate-orange.svg)](docs/RELEASE_READINESS.md)
+[![Status](https://img.shields.io/badge/version-v0.1.0-orange.svg)](https://github.com/moeedahmed/improvement-guru/releases/tag/v0.1.0)
 
 ![Improvement Guru hero image showing agent-native healthcare QI scaffolding, run charts, source profiles, local checks, and safety verification.](docs/assets/improvement-guru-hero.jpg)
 
@@ -21,7 +21,7 @@ improvement-guru sources list
 improvement-guru new uk_demo --profile uk
 ```
 
-> Release state: `0.1.0` first public release. Improvement Guru is not on PyPI yet; install from a checkout for now.
+> Release state: `0.1.0` first public release. Improvement Guru is not on PyPI yet; install the tagged release from GitHub (see [Install](#install)).
 
 ## Why Improvement Guru
 
@@ -64,6 +64,24 @@ See `docs/PRODUCT_POSITIONING.md` for naming and non-claim guidance. Agents and 
 
 ## Install
 
+### Install the released version
+
+Improvement Guru is not on PyPI yet. Install the tagged release from GitHub:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install "git+https://github.com/moeedahmed/improvement-guru.git@v0.1.0"
+.venv/bin/improvement-guru sources list
+```
+
+On Windows, run `py -m venv .venv`, then `.venv\Scripts\python -m pip install "git+https://github.com/moeedahmed/improvement-guru.git@v0.1.0"` and `.venv\Scripts\improvement-guru sources list`.
+
+On Windows, upgrade with `.venv\Scripts\python -m pip install --upgrade "git+https://github.com/moeedahmed/improvement-guru.git@<newer-tag>"` and uninstall with `.venv\Scripts\python -m pip uninstall improvement-guru`.
+
+To upgrade, run `.venv/bin/python -m pip install --upgrade "git+https://github.com/moeedahmed/improvement-guru.git@<newer-tag>"`. To uninstall, run `.venv/bin/python -m pip uninstall improvement-guru`.
+
+### Install from a checkout (for contributors)
+
 From a local checkout:
 
 ```bash
@@ -86,7 +104,7 @@ You can also run the CLI from a checkout with `python3 -m improvement_guru ...`.
 
 ## Quickstart
 
-Run these commands from inside a Improvement Guru checkout after installing the local package:
+Run these commands from inside an Improvement Guru checkout after installing the local package:
 
 ```bash
 improvement-guru new demo_qip_project
@@ -125,7 +143,7 @@ Actual `improvement-guru deid scan examples/synthetic_ward_audit.csv` output:
 Actual run-chart command output:
 
 ```text
-/tmp/improvement_guru_readme_ed_flow.csv	rows=12	median=41.5	shifts=4	trends=6
+/tmp/ed_flow_run_chart.csv	rows=12	median=41.5	shifts=4	trends=6
 ```
 
 The annotated CSV begins:
@@ -179,6 +197,8 @@ Optional flags:
 - `--baseline-points <n>` calculates the median from the first `n` rows.
 - `--run-length <n>` changes the threshold for same-side shift signals.
 - `--trend-length <n>` changes the threshold for consecutive improvement/worsening trend signals.
+
+By default a shift is flagged at 6 or more consecutive points on the same side of the baseline median (a point exactly on the median resets the count) and a trend at 5 or more consecutive points each strictly higher or each strictly lower than the one before (`--run-length`, `--trend-length`; both must be at least 2).
 
 The command writes a new annotated CSV with `qip_` columns for baseline median, side of median, run length, shift signal, trend direction, trend length, and trend signal. It is a lightweight helper for synthetic or properly de-identified learning data, not a statistical process control package.
 

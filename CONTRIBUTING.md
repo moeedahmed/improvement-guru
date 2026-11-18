@@ -19,7 +19,7 @@ Each source entry should include:
 - `title`
 - `organisation`
 - `url`
-- `summary`
+- `use`
 - `checked_on`
 
 Use ISO dates for `checked_on`, for example `2026-07-04`. Before each release, run:
@@ -88,6 +88,13 @@ When copying a guide into an agent skill directory, copy the complete file and k
 ## Local Checks
 
 Run from the repo root:
+
+- `./scripts/verify_changed.sh` for every change.
+- `./scripts/verify_release.sh` before a release.
+
+Changes go through a pull request; see [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
+
+The individual commands are:
 
 ```bash
 python3 -m pip install -e ".[dev]"
