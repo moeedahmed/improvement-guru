@@ -86,10 +86,13 @@ def analyse_run_chart_csv(
             row_number += 1
     if not rows:
         raise ValueError("input CSV has no data rows")
+    delimiter_hint = ""
+    if any(";" in name or "\t" in name for name in fieldnames):
+        delimiter_hint = "; the file may not be comma-separated; save it as CSV (comma delimited)"
     if value_column not in fieldnames:
-        raise ValueError(f"value column not found: {value_column}")
+        raise ValueError(f"value column not found: {value_column}{delimiter_hint}")
     if date_column and date_column not in fieldnames:
-        raise ValueError(f"date column not found: {date_column}")
+        raise ValueError(f"date column not found: {date_column}{delimiter_hint}")
 
     values = [_parse_value(row[value_column], index + 2) for index, row in enumerate(rows)]
     baseline_values = values[:baseline_points] if baseline_points else values

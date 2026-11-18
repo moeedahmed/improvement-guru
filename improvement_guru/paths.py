@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path, PurePosixPath, PureWindowsPath
+import site
 import sys
 
 
@@ -26,7 +27,17 @@ def data_path(*parts: str) -> Path:
         if any(".." in component.parts for component in components):
             raise ValueError("data path components must not contain '..'")
 
-    for root in (SOURCE_ROOT, INSTALLED_DATA_ROOT):
+    roots = [SOURCE_ROOT, INSTALLED_DATA_ROOT]
+    imported_from_user_site = SOURCE_ROOT.is_relative_to(Path(site.getusersitepackages()).resolve())
+    user_base = site.getuserbase() if site.ENABLE_USER_SITE or imported_from_user_site else None
+    if user_base:
+        user_data_root = Path(user_base) / "improvement-guru"
+        if imported_from_user_site:
+            roots.insert(1, user_data_root)
+        else:
+            roots.append(user_data_root)
+
+    for root in roots:
         candidate = root.joinpath(*parts)
         resolved_root = root.resolve()
         resolved_candidate = candidate.resolve()

@@ -96,7 +96,11 @@ def create_project(
     try:
         target_stat = target.lstat()
         for source, filename in SCAFFOLD_FILES:
-            content = source.read_text(encoding="utf-8")
+            try:
+                content = source.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError) as exc:
+                exc._bundled_resource_error = f"could not read scaffold template: {source.name}"
+                raise
             for placeholder, value in replacements.items():
                 content = content.replace(placeholder, value)
             destination = target / filename

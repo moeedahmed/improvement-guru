@@ -93,7 +93,7 @@ def redact_file(input_path: str | Path, output_path: str | Path) -> Path:
     source = Path(input_path)
     destination = Path(output_path)
 
-    if source.resolve() == destination.resolve():
+    if _resolve_redact_path(source, input_path) == _resolve_redact_path(destination, output_path):
         raise ValueError("output path must not be the input file")
     if destination.exists():
         raise FileExistsError(f"output file already exists: {destination}")
@@ -102,6 +102,14 @@ def redact_file(input_path: str | Path, output_path: str | Path) -> Path:
     with destination.open("x", encoding="utf-8") as handle:
         handle.write(redacted)
     return destination
+
+
+def _resolve_redact_path(path: Path, original: str | Path) -> Path:
+    try:
+        return path.resolve()
+    except RuntimeError as exc:
+        # Python 3.11 and 3.12 raise RuntimeError on symlink loops.
+        raise ValueError(f"symlink loop in path: {str(original)!r}") from exc
 
 
 def redact_text(text: str) -> str:

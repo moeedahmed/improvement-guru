@@ -46,6 +46,30 @@ def test_data_path_falls_back_to_existing_installed_file(monkeypatch, tmp_path):
     assert paths.data_path("nested", "data.txt") == installed_file
 
 
+@pytest.mark.parametrize("user_install", [False, True])
+def test_data_path_orders_installed_roots_by_import_origin(monkeypatch, tmp_path, user_install):
+    source, installed = set_data_roots(monkeypatch, tmp_path)
+    user_base = tmp_path / "user"
+    user_root = user_base / "improvement-guru"
+    user_root.mkdir(parents=True)
+    user_file = user_root / "data.txt"
+    user_file.write_text("user", encoding="utf-8")
+    monkeypatch.setattr("site.ENABLE_USER_SITE", True)
+    monkeypatch.setattr("site.getuserbase", lambda: str(user_base))
+    user_site = source if user_install else user_base / "site-packages"
+    monkeypatch.setattr("site.getusersitepackages", lambda: str(user_site))
+
+    assert paths.data_path("data.txt") == user_file
+
+    installed_file = installed / "data.txt"
+    installed_file.write_text("installed", encoding="utf-8")
+
+    assert paths.data_path("data.txt") == (user_file if user_install else installed_file)
+
+    user_file.unlink()
+    assert paths.data_path("data.txt") == installed_file
+
+
 def test_data_path_returns_source_candidate_when_neither_exists(monkeypatch, tmp_path):
     source, _ = set_data_roots(monkeypatch, tmp_path)
 
