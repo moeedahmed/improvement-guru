@@ -45,7 +45,7 @@ def load_profile(profile_id: str) -> dict[str, Any]:
 
 def _read_profile(path: Path) -> dict[str, Any]:
     try:
-        if not _PROFILE_ID_PATTERN.fullmatch(path.stem):
+        if not _PROFILE_ID_PATTERN.fullmatch(path.stem.lower()):
             raise ValueError(
                 "source profile ID must contain only letters, numbers, hyphens, or underscores"
             )

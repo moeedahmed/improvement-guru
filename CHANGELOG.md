@@ -4,7 +4,7 @@ All notable changes to Improvement Guru will be documented here.
 
 ## Unreleased
 
-- `deid scan` now prints one plain `Error:` line and exits 2 for a missing file, a folder, an unreadable file, or a file that is not UTF-8 text, instead of a Python traceback. `deid redact` gives the same clearer message for a file that is not UTF-8 text.
+- `deid scan` now prints one plain `Error:` line and exits 2 for a missing file, a folder, an unreadable file, or a file that cannot be decoded as UTF-8, instead of a Python traceback. `deid redact` gives the same clearer message for a file that is not UTF-8 text.
 - `new` now prints a plain error when the parent folder does not exist or the project name is empty. `new`, `sources list`, and `sources show` name the failing bundled file or profile in a plain error.
 - Fixes `improvement-guru` not finding its source profiles and templates after `pip install --user`.
 - Adds `improvement-guru --version`.
