@@ -123,7 +123,10 @@ Improvement Guru tag or GitHub release.
 
 ## Remaining Before Public Release
 
-- Extract into the intended public repository target without generated caches or local workspace-only files.
+The v0.1.0 GitHub release was published on 2026-10-16. Its tag still contains `docs/codex-result-2026-10-01.md`. The `MANIFEST.in` exclusion of agent result files from the source package is unreleased.
+
+Still open (completion is not recorded in the repo):
+
 - Re-check official source URLs near the release date.
 - Review public README wording for non-claims before any announcement.
 - Confirm the intended open-source release target, license posture, and contribution policy.

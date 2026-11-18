@@ -17,7 +17,7 @@ _PROFILE_ID_PATTERN = re.compile(r"^[a-z0-9]+(?:[a-z0-9_-]*[a-z0-9])?$")
 def list_profiles() -> list[dict[str, Any]]:
     """Return all available source profiles in stable id order."""
 
-    profiles = [load_profile(path.stem) for path in sorted(STANDARDS_DIR.glob("*.json"))]
+    profiles = [_read_profile(path) for path in sorted(STANDARDS_DIR.glob("*.json"))]
     return sorted(profiles, key=lambda profile: profile["id"])
 
 
@@ -34,17 +34,33 @@ def load_profile(profile_id: str) -> dict[str, Any]:
             "source profile ID must contain only letters, numbers, hyphens, or underscores"
         )
     path = STANDARDS_DIR / f"{normalised}.json"
-    if not path.exists():
-        available = ", ".join(profile["id"] for profile in list_profiles()) if STANDARDS_DIR.exists() else ""
-        raise ValueError(f"unknown source profile '{profile_id}'. Available profiles: {available}")
-    with path.open(encoding="utf-8") as handle:
-        try:
-            profile = json.load(handle)
-        except json.JSONDecodeError as exc:
+    try:
+        return _read_profile(path)
+    except FileNotFoundError:
+        if path.exists():
+            raise
+    available = ", ".join(profile["id"] for profile in list_profiles())
+    raise ValueError(f"unknown source profile '{profile_id}'. Available profiles: {available}")
+
+
+def _read_profile(path: Path) -> dict[str, Any]:
+    try:
+        if not _PROFILE_ID_PATTERN.fullmatch(path.stem.lower()):
             raise ValueError(
-                f"{path} contains malformed JSON at line {exc.lineno}, column {exc.colno}"
-            ) from None
-    _validate_profile(profile, path)
+                "source profile ID must contain only letters, numbers, hyphens, or underscores"
+            )
+        with path.open(encoding="utf-8") as handle:
+            try:
+                profile = json.load(handle)
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    f"{path} contains malformed JSON at line {exc.lineno}, column {exc.colno}"
+                ) from None
+        _validate_profile(profile, path)
+    except (OSError, ValueError) as exc:
+        # Let the CLI identify bundled read failures while preserving the library exception.
+        exc._bundled_resource_error = f"could not read source profile: {path.stem!r}"
+        raise
     return profile
 
 

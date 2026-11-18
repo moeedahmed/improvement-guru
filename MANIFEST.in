@@ -6,6 +6,7 @@ include CONTRIBUTING.md
 include CHANGELOG.md
 recursive-include checklists *.md
 recursive-include docs *.md
+exclude docs/codex-result-*.md
 recursive-include examples *.csv *.md
 recursive-include scripts *.py
 recursive-include skills *.md

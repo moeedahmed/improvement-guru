@@ -1,6 +1,9 @@
+import errno
+
 import pytest
 
-from improvement_guru.scaffold import create_project
+from improvement_guru.scaffold import SCAFFOLD_FILES, create_project
+from improvement_guru.sources import STANDARDS_DIR, load_profile
 
 
 def test_create_project_writes_expected_scaffold_with_substitutions(tmp_path):
@@ -61,6 +64,42 @@ def test_create_project_refuses_to_overwrite_existing_directory(tmp_path):
         raise AssertionError("create_project should refuse existing directories")
 
     assert (project_dir / "keep.txt").read_text(encoding="utf-8") == "do not touch"
+
+
+def test_create_project_preserves_missing_parent_error(tmp_path):
+    project_dir = tmp_path / "missing" / "project"
+
+    with pytest.raises(FileNotFoundError) as exc:
+        create_project(project_dir)
+
+    assert exc.value.errno == errno.ENOENT
+    assert exc.value.filename == str(project_dir)
+
+
+@pytest.mark.parametrize("reader", ["scaffold-profile", "scaffold-template", "load-profile"])
+def test_library_preserves_bundled_read_error(tmp_path, monkeypatch, reader):
+    project_dir = tmp_path / "project"
+    resource = SCAFFOLD_FILES[0][0] if reader == "scaffold-template" else STANDARDS_DIR / "global.json"
+    error = PermissionError(errno.EACCES, "injected read failure", str(resource))
+    original_open = type(resource).open
+
+    def fail_read(path, *args, **kwargs):
+        if path == resource:
+            raise error
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(type(resource), "open", fail_read)
+
+    with pytest.raises(PermissionError) as exc:
+        if reader == "load-profile":
+            load_profile("global")
+        else:
+            create_project(project_dir)
+
+    assert exc.value is error
+    assert exc.value.errno == errno.EACCES
+    assert exc.value.filename == str(resource)
+    assert not project_dir.exists()
 
 
 def test_create_project_removes_partially_written_current_file(tmp_path, monkeypatch):

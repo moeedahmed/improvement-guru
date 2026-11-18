@@ -21,13 +21,20 @@ python3 -m venv .venv
 | Code | Meaning |
 | --- | --- |
 | 0 | Success (for `deid scan`: no supported patterns found) |
-| 1 | `deid scan` only: one or more findings reported |
-| 2 | Usage or input error; the reason is printed to stderr as `Error: ...` |
+| 1 | `deid scan` findings, or a missing or unreadable input in pinned v0.1.0. A traceback on stderr means command failure. |
+| 2 | Command error or incomplete invocation. See stderr for the message or help. |
+
+Errors handled by the CLI print a message starting with `Error:` to stderr and exit 2. For missing or invalid arguments, argparse prints a `usage:` line and a lowercase `error:` diagnostic to stderr and exits 2.
+
+In v0.1.0, an unreadable or missing input to `deid scan` ends in a Python traceback and may exit 1. Treat a traceback on stderr as a command failure even when the exit code is 1. The plain `Error:` messages for these input failures are unreleased.
+
+With no command, the CLI prints top-level help to stderr and exits 2. With no subcommand, `deid`, `charts` and `sources` print their own group help to stderr and exit 2 (added after v0.1.0, unreleased). In v0.1.0, these invocations print top-level help.
 
 ## Commands
 
 | Command | Inputs | Output (stdout) | Writes |
 | --- | --- | --- | --- |
+| `improvement-guru --version` (added after v0.1.0, unreleased) | none | `improvement-guru <version>` | none |
 | `improvement-guru new <project-name> [--profile global\|uk\|us\|canada\|australia]` | New folder name; optional source profile (default `global`) | One created path per line | A new project folder; refuses to overwrite an existing one |
 | `improvement-guru sources list` | none | `id<TAB>name` per profile | none |
 | `improvement-guru sources show <profile>` | Profile id | Formatted source profile | none |
@@ -58,11 +65,11 @@ The engine has no service, so it sends no alerts itself. The agent that calls it
 | Header line | Fill with |
 | --- | --- |
 | Product | `Improvement Guru` and the pinned version |
-| What happened | The command run and its `Error: ...` line from stderr |
+| What happened | The command run and its stderr message or help output |
 | Users affected | `No` for an input error (exit 2) the caller can correct; `Yes` if the same command fails for every input after a version change |
-| Suggested fix | Exit 2: correct the input named in the message. A run that fails after a version bump: go back to the last good tag in `docs/rollback.md` |
+| Suggested fix | If stderr identifies an input or usage problem, correct the invocation. If a run fails after a version bump, go back to the last good tag in `docs/rollback.md`. |
 
-`deid scan` exit 1 means findings were reported. That is a normal result to hand to the user, not a failure.
+Report `deid scan` findings normally. In pinned v0.1.0, missing or unreadable input can also exit 1 with a traceback on stderr. Treat that as a command failure.
 
 ## No crash reporting
 
