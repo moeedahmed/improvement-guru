@@ -55,6 +55,9 @@ information-governance tool of record.
   test fixtures — synthetic data only (NHS England `999` test-range
   convention for NHS numbers)
 - Never remove the `SAFETY.md` boundaries when editing skill guides or docs
+- Public releases, published tags and announcements need Moeed's explicit yes
+  and go through a pull request (`docs/RELEASE_PROCESS.md`). This is stricter
+  than the Release line in the product standard below, so it wins.
 
 ---
 
