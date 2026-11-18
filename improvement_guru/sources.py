@@ -45,6 +45,10 @@ def load_profile(profile_id: str) -> dict[str, Any]:
 
 def _read_profile(path: Path) -> dict[str, Any]:
     try:
+        if not _PROFILE_ID_PATTERN.fullmatch(path.stem):
+            raise ValueError(
+                "source profile ID must contain only letters, numbers, hyphens, or underscores"
+            )
         with path.open(encoding="utf-8") as handle:
             try:
                 profile = json.load(handle)

@@ -27,22 +27,28 @@ def data_path(*parts: str) -> Path:
         if any(".." in component.parts for component in components):
             raise ValueError("data path components must not contain '..'")
 
-    roots = [SOURCE_ROOT, INSTALLED_DATA_ROOT]
-    imported_from_user_site = SOURCE_ROOT.is_relative_to(Path(site.getusersitepackages()).resolve())
+    for root in (SOURCE_ROOT, INSTALLED_DATA_ROOT):
+        candidate = _existing_data_path(root, *parts)
+        if candidate is not None:
+            return candidate
+
+    try:
+        user_site = Path(site.getusersitepackages()).resolve()
+    except (OSError, RuntimeError):
+        imported_from_user_site = False
+    else:
+        imported_from_user_site = SOURCE_ROOT.is_relative_to(user_site)
+
     user_base = site.getuserbase() if site.ENABLE_USER_SITE or imported_from_user_site else None
     if user_base:
-        user_data_root = Path(user_base) / "improvement-guru"
-        if imported_from_user_site:
-            roots.insert(1, user_data_root)
-        else:
-            roots.append(user_data_root)
-
-    for root in roots:
-        candidate = root.joinpath(*parts)
-        resolved_root = root.resolve()
-        resolved_candidate = candidate.resolve()
-        if not resolved_candidate.is_relative_to(resolved_root):
-            raise ValueError("data path escapes its data root")
-        if candidate.exists():
+        candidate = _existing_data_path(Path(user_base) / "improvement-guru", *parts)
+        if candidate is not None:
             return candidate
     return SOURCE_ROOT.joinpath(*parts)
+
+
+def _existing_data_path(root: Path, *parts: str) -> Path | None:
+    candidate = root.joinpath(*parts)
+    if not candidate.resolve().is_relative_to(root.resolve()):
+        raise ValueError("data path escapes its data root")
+    return candidate if candidate.exists() else None

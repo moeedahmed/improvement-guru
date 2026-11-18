@@ -21,7 +21,7 @@ python3 -m venv .venv
 | Code | Meaning |
 | --- | --- |
 | 0 | Success (for `deid scan`: no supported patterns found) |
-| 1 | `deid scan` only: one or more findings reported |
+| 1 | `deid scan` findings, or a missing or unreadable input in pinned v0.1.0. A traceback on stderr means command failure. |
 | 2 | Command error or incomplete invocation. See stderr for the message or help. |
 
 Errors handled by the CLI print a message starting with `Error:` to stderr and exit 2. For missing or invalid arguments, argparse prints a `usage:` line and a lowercase `error:` diagnostic to stderr and exits 2.
@@ -69,7 +69,7 @@ The engine has no service, so it sends no alerts itself. The agent that calls it
 | Users affected | `No` for an input error (exit 2) the caller can correct; `Yes` if the same command fails for every input after a version change |
 | Suggested fix | If stderr identifies an input or usage problem, correct the invocation. If a run fails after a version bump, go back to the last good tag in `docs/rollback.md`. |
 
-`deid scan` exit 1 means findings were reported. That is a normal result to hand to the user, not a failure.
+Report `deid scan` findings normally. In pinned v0.1.0, missing or unreadable input can also exit 1 with a traceback on stderr. Treat that as a command failure.
 
 ## No crash reporting
 

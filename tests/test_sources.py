@@ -85,6 +85,16 @@ def test_profile_id_normalisation_remains_supported(monkeypatch, tmp_path):
     assert load_profile(" TEST ")["id"] == "test"
 
 
+def test_list_profiles_rejects_invalid_filename(monkeypatch, tmp_path):
+    profile = valid_profile()
+    profile["id"] = "bad name"
+    (tmp_path / "bad name.json").write_text(json.dumps(profile), encoding="utf-8")
+    monkeypatch.setattr(sources_module, "STANDARDS_DIR", tmp_path)
+
+    with pytest.raises(ValueError, match="source profile ID"):
+        list_profiles()
+
+
 def test_malformed_json_has_helpful_value_error(monkeypatch, tmp_path):
     path = write_profile(tmp_path, None, contents='{\n  "id":')
     monkeypatch.setattr(sources_module, "STANDARDS_DIR", tmp_path)
