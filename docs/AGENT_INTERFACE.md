@@ -42,6 +42,8 @@ With no command, the CLI prints top-level help to stderr and exits 2. With no su
 | `improvement-guru deid scan <file.csv\|file.txt>` | File | `line:column<TAB>FINDING_TYPE<TAB>masked-preview` per finding, or `No supported identifier patterns found.` | none |
 | `improvement-guru deid redact <input> --out <output>` | Input file; new output path | Output path | A redacted copy; never modifies the input; refuses to overwrite |
 
+On success, `new` prints the ordered file list on stdout. In the unreleased version, it also prints next steps on stderr when both streams are terminals. If either stream is redirected or captured, stderr stays empty. v0.1.0 prints the file list only.
+
 Finding types: `NHS_NUMBER`, `POSSIBLE_NHS_NUMBER`, `UK_POSTCODE`, `DOB_LIKE_DATE`, `UK_PHONE_NUMBER`, `EMAIL_ADDRESS`. The scan is assistive pattern-matching, not proof of anonymisation; see `SAFETY.md`.
 
 ## Rule packs and settings

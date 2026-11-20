@@ -150,8 +150,20 @@ def _run_new(project_name: str, profile: str) -> int:
     if not project_name:
         return _error("project name is empty")
     target = Path(project_name)
-    for path in create_project(target, target.name, profile_id=profile):
+    created = create_project(target, target.name, profile_id=profile)
+    for path in created:
         print(path)
+    if sys.stdout.isatty() and sys.stderr.isatty():
+        print(
+            f"Created {len(created)} files in {target} (profile: {profile}).\n"
+            "Next:\n"
+            f"1. Open {target / 'charter.md'} and write your aim.\n"
+            f"2. Read {target / 'source-map.md'} for the sources behind this profile.\n"
+            "3. Before collecting data, confirm your local governance route and review the "
+            "registration, information-governance and de-identification checklists.\n"
+            "Keep patient-identifiable data out of this toolkit.",
+            file=sys.stderr,
+        )
     return 0
 
 

@@ -1,66 +1,57 @@
 # Improvement Guru
 
-[![CI](https://github.com/moeedahmed/improvement-guru/actions/workflows/ci.yml/badge.svg)](https://github.com/moeedahmed/improvement-guru/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](pyproject.toml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/version-v0.1.0-orange.svg)](https://github.com/moeedahmed/improvement-guru/releases/tag/v0.1.0)
+**An MIT-licensed, open-source command-line toolkit for doctors and QI teams starting a quality improvement project or clinical audit.**
 
-![Improvement Guru hero image showing agent-native healthcare QI scaffolding, run charts, source profiles, local checks, and safety verification.](docs/assets/improvement-guru-hero.jpg)
+- Creates nine files, including a source map.
+- Adds shift and trend annotations to a CSV of synthetic or fully de-identified measurements.
+- `deid scan` reports supported identifier patterns. `deid redact` can write a separate copy.
 
-Improvement Guru is an agent-native, local-first healthcare quality-improvement toolkit for building source-grounded QIP and audit project scaffolds without using patient data.
-
-It gives clinicians, QI teams, and agent builders a tested open-source foundation for safe improvement work: country source profiles, synthetic examples, copyable agent skill guides, lightweight run-chart annotation, and deterministic safety checks.
-
-```bash
-git clone https://github.com/moeedahmed/improvement-guru.git
-cd improvement-guru
-python3 -m venv .venv
-source .venv/bin/activate
-python3 -m pip install -e ".[dev]"
-improvement-guru sources list
-improvement-guru new uk_demo --profile uk
-```
-
-> Release state: `0.1.0` first public release. Improvement Guru is not on PyPI yet; install the tagged release from GitHub (see [Install](#install)).
-
-## Why Improvement Guru
-
-Most QI resources are scattered across templates, guidance PDFs, teaching sites, local governance routes, and platform-specific tools. Improvement Guru is designed to be the open-source starting point that humans and agents can both use safely:
-
-- **Agent-native by design:** structured templates, source profiles, static skill guides, deterministic CLI checks, and outputs that agents can read, modify, verify, and extend.
-- **Source-grounded:** global, UK, US, Canadian, and Australian profiles point back to primary QI, audit, patient-safety, and reporting sources.
-- **Local-first:** no hosted service, no dashboard, no telemetry, no LLM calls, no MCP calls, and no external API calls at runtime.
-- **Synthetic-safe:** examples are synthetic; the release gate checks the NHS `999` test-range convention and blocks tracked generated artefacts.
-- **Release-tested:** CI runs across Ubuntu, macOS, Windows, and Python 3.11-3.14, with tests, compile checks, release smoke, source checks, packaging, and installed CLI proof.
-
-## What It Does
-
-- Creates a local QIP project scaffold from static templates.
-- Attaches a source profile such as `global`, `uk`, `us`, `canada`, or `australia`.
-- Provides static agent skill guides that can be copied into an agent context.
-- Analyses synthetic or de-identified run-chart CSVs with simple shift/trend annotations.
-- Scans `.csv` and `.txt` files for a narrow set of deterministic identifier patterns.
-- Writes redacted copies without modifying the input file.
-- Uses Python standard library only at runtime.
-- Makes no LLM calls, external API calls, MCP calls, web server calls, or dashboard calls.
+Once installed, the CLI runs locally without an account, telemetry, AI calls or internet access.
 
 This is an educational scaffold. It is not an information governance tool of record, not clinical decision support, not a governance approval tool, and not reliable de-identification for real patient data.
 
-## Product Verdict
+## Start here
 
-- Public brand and open-source repo: Improvement Guru.
-- Python distribution: `improvement-guru`.
-- Python import package: `improvement_guru`.
-- Static skills: included as guide material in `skills/`.
-- Local CLI: included as `improvement-guru` and `python3 -m improvement_guru`.
-- Engine: not yet. There is no hosted runtime, model orchestration layer, MCP server, dashboard, or background service.
+Needs Python 3.11 or newer, Git, and internet access for the install.
 
-See `docs/PRODUCT_POSITIONING.md` for naming and non-claim guidance. Agents and schedulers should read `docs/AGENT_INTERFACE.md` for every command, its inputs, outputs and exit codes, and how to pin a tagged release.
+macOS or Linux
 
-## Requirements
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install "git+https://github.com/moeedahmed/improvement-guru.git@v0.1.0"
+improvement-guru new my_audit --profile uk
+improvement-guru sources show uk
+```
 
-- Python 3.11 or newer.
-- `pytest` only for running the test suite.
+Windows
+
+```powershell
+py -m venv .venv
+.venv\Scripts\python -m pip install "git+https://github.com/moeedahmed/improvement-guru.git@v0.1.0"
+.venv\Scripts\improvement-guru new my_audit --profile uk
+.venv\Scripts\improvement-guru sources show uk
+```
+
+When you have your own figures
+
+Use only synthetic or already fully de-identified files.
+
+macOS or Linux
+
+```bash
+improvement-guru charts run-chart synthetic_figures.csv --value-column value --out annotated.csv
+improvement-guru deid scan synthetic_export.csv
+```
+
+Windows
+
+```powershell
+.venv\Scripts\improvement-guru charts run-chart synthetic_figures.csv --value-column value --out annotated.csv
+.venv\Scripts\improvement-guru deid scan synthetic_export.csv
+```
+
+![Improvement Guru hero image showing agent-native healthcare QI scaffolding, run charts, source profiles, local checks, and safety verification.](docs/assets/improvement-guru-hero.jpg)
 
 ## Install
 

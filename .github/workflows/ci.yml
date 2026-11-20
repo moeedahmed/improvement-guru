@@ -50,3 +50,29 @@ jobs:
 
       - name: Check source URL list
         run: python scripts/check_sources.py --dry-run
+
+      - name: Check Windows README start from an empty folder
+        if: runner.os == 'Windows' && matrix.python-version == '3.14'
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          Set-Location (New-Item -ItemType Directory -Path "$env:RUNNER_TEMP/readme-start")
+          $ErrorActionPreference = 'Stop'
+          py -m venv .venv
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          .venv\Scripts\python -m pip install "git+https://github.com/moeedahmed/improvement-guru.git@v0.1.0"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          .venv\Scripts\improvement-guru new my_audit --profile uk
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          .venv\Scripts\improvement-guru sources show uk
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          $expected = @(
+            'charter.md', 'pdsa-log.md', 'driver-diagram.md',
+            'data-collection-spec.md', 'audit-standards.md', 'ig-caldicott.md',
+            'deid-checklist.md', 'qip-registration.md', 'source-map.md'
+          )
+          $missing = $expected | Where-Object { -not (Test-Path (Join-Path my_audit $_)) }
+          if ($missing) {
+            Write-Error "Missing scaffold files: $($missing -join ', ')"
+            exit 1
+          }
