@@ -37,9 +37,18 @@ When you have your own figures
 
 Use only synthetic or already fully de-identified files.
 
+macOS or Linux
+
 ```bash
 improvement-guru charts run-chart synthetic_figures.csv --value-column value --out annotated.csv
 improvement-guru deid scan synthetic_export.csv
+```
+
+Windows
+
+```powershell
+.venv\Scripts\improvement-guru charts run-chart synthetic_figures.csv --value-column value --out annotated.csv
+.venv\Scripts\improvement-guru deid scan synthetic_export.csv
 ```
 
 ![Improvement Guru hero image showing agent-native healthcare QI scaffolding, run charts, source profiles, local checks, and safety verification.](docs/assets/improvement-guru-hero.jpg)
