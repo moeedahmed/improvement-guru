@@ -50,3 +50,15 @@ jobs:
 
       - name: Check source URL list
         run: python scripts/check_sources.py --dry-run
+
+      - name: Check Windows README start from an empty folder
+        if: runner.os == 'Windows' && matrix.python-version == '3.14'
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          Set-Location (New-Item -ItemType Directory -Path "$env:RUNNER_TEMP/readme-start")
+          py -m venv .venv
+          .venv\Scripts\python -m pip install "$env:GITHUB_WORKSPACE"
+          .venv\Scripts\improvement-guru new my_audit --profile uk
+          .venv\Scripts\improvement-guru sources show uk
+          if ((Get-ChildItem my_audit -File).Count -ne 9) { throw "Expected nine scaffold files" }

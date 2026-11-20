@@ -407,3 +407,37 @@ def test_documented_exit_codes_match_the_cases():
     assert {case["exit_code"] for case in CASES} == {0, 1, 2}
     for code in ("0", "1", "2"):
         assert re.search(rf"^\| {code} \|", INTERFACE_DOC, flags=re.MULTILINE)
+
+
+@pytest.mark.parametrize("stdout_tty,stderr_tty", [(False, True), (True, False), (False, False), (True, True)])
+def test_new_terminal_guidance(tmp_path, monkeypatch, capsys, stdout_tty, stderr_tty):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: stdout_tty)
+    monkeypatch.setattr(sys.stderr, "isatty", lambda: stderr_tty)
+    folder = Path("ward_review")
+    args = ["new", str(folder), "--profile", "canada"]
+    assert main(args) == 0
+    output = capsys.readouterr()
+    filenames = (
+        "charter.md", "pdsa-log.md", "driver-diagram.md", "data-collection-spec.md",
+        "audit-standards.md", "ig-caldicott.md", "deid-checklist.md", "qip-registration.md", "source-map.md",
+    )
+    assert output.out == "".join(f"{folder / name}\n" for name in filenames)
+    guidance = (
+        "Created 9 files in ward_review (profile: canada).\nNext:\n"
+        f"1. Open {folder / 'charter.md'} and write your aim.\n"
+        f"2. Read {folder / 'source-map.md'} for the sources behind this profile.\n"
+        "3. Before collecting data, confirm your local governance route and review the "
+        "registration, information-governance and de-identification checklists.\n"
+        "Keep patient-identifiable data out of this toolkit.\n"
+    )
+    assert output.err == (guidance if stdout_tty and stderr_tty else "")
+
+
+def test_new_failure_in_terminal(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+    monkeypatch.setattr(sys.stderr, "isatty", lambda: True)
+    assert main(["new", str(tmp_path)]) == 2
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert output.err == f"Error: project folder already exists: {tmp_path}\n"
