@@ -4,6 +4,7 @@ import re
 import pytest
 
 import improvement_guru.sources as sources_module
+from improvement_guru.cli import main
 from improvement_guru.sources import format_profile, list_profiles, load_profile, source_map_markdown
 
 
@@ -91,6 +92,21 @@ def test_list_profiles_accepts_uppercase_filename(monkeypatch, tmp_path):
     monkeypatch.setattr(sources_module, "STANDARDS_DIR", tmp_path)
 
     assert [profile["id"] for profile in list_profiles()] == ["global"]
+
+
+def test_sources_commands_reject_a_profile_id_that_differs_from_filename(
+    monkeypatch, tmp_path, capsys
+):
+    profile = valid_profile()
+    profile["id"] = "other"
+    write_profile(tmp_path, profile)
+    monkeypatch.setattr(sources_module, "STANDARDS_DIR", tmp_path)
+
+    for args in (["sources", "list"], ["sources", "show", "test"]):
+        assert main(args) == 2
+        assert capsys.readouterr() == (
+            "", "Error: source profile ID 'other' does not match filename 'test.json'\n"
+        )
 
 
 def test_list_profiles_rejects_invalid_filename(monkeypatch, tmp_path):

@@ -50,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
             if isinstance(exc, FileNotFoundError) and exc.filename == str(target):
                 return _error(f"parent folder does not exist: {target.parent}")
             return _error(exc)
-        if args.command == "sources" and args.sources_command == "show" and isinstance(exc, ValueError):
+        if args.command == "sources" and isinstance(exc, ValueError):
             return _error(exc)
         raise
 
@@ -154,8 +154,9 @@ def _run_new(project_name: str, profile: str) -> int:
     for path in created:
         print(path)
     if sys.stdout.isatty() and sys.stderr.isatty():
+        normalised_profile = profile.lower().strip()
         print(
-            f"Created {len(created)} files in {target} (profile: {profile}).\n"
+            f"Created {len(created)} files in {target} (profile: {normalised_profile}).\n"
             "Next:\n"
             f"1. Open {target / 'charter.md'} and write your aim.\n"
             f"2. Read {target / 'source-map.md'} for the sources behind this profile.\n"

@@ -263,16 +263,7 @@ The next useful improvements are practical, not platform theatre:
 
 ## Release Readiness
 
-Run the local release smoke check before any public-facing release work:
-
-```bash
-python3 -m pytest -q
-python3 -m compileall improvement_guru tests scripts
-python3 scripts/release_check.py --install-smoke
-python3 scripts/check_sources.py --dry-run
-```
-
-The smoke check proves UK and international profile scaffolds, source display, synthetic de-id scan/redact, the NHS 999 fixture convention, synthetic run-chart analysis, static skill-guide frontmatter and safety anchors, absence of tracked generated artifacts, and the installed `improvement-guru` console command path. See `docs/RELEASE_READINESS.md`.
+See [CONTRIBUTING.md](CONTRIBUTING.md#release-readiness) for the checks that contributors run before a release.
 
 ## Architecture
 

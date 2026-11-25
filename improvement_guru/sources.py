@@ -17,6 +17,8 @@ _PROFILE_ID_PATTERN = re.compile(r"^[a-z0-9]+(?:[a-z0-9_-]*[a-z0-9])?$")
 def list_profiles() -> list[dict[str, Any]]:
     """Return all available source profiles in stable id order."""
 
+    if not STANDARDS_DIR.exists():
+        raise ValueError("source profile folder is missing")
     profiles = [_read_profile(path) for path in sorted(STANDARDS_DIR.glob("*.json"))]
     return sorted(profiles, key=lambda profile: profile["id"])
 
@@ -44,8 +46,9 @@ def load_profile(profile_id: str) -> dict[str, Any]:
 
 
 def _read_profile(path: Path) -> dict[str, Any]:
+    filename_id = path.stem.lower()
     try:
-        if not _PROFILE_ID_PATTERN.fullmatch(path.stem.lower()):
+        if not _PROFILE_ID_PATTERN.fullmatch(filename_id):
             raise ValueError(
                 "source profile ID must contain only letters, numbers, hyphens, or underscores"
             )
@@ -61,6 +64,10 @@ def _read_profile(path: Path) -> dict[str, Any]:
         # Let the CLI identify bundled read failures while preserving the library exception.
         exc._bundled_resource_error = f"could not read source profile: {path.stem!r}"
         raise
+    if profile["id"] != filename_id:
+        raise ValueError(
+            f"source profile ID {profile['id']!r} does not match filename {path.name!r}"
+        )
     return profile
 
 
