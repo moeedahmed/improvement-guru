@@ -14,6 +14,14 @@ Improvement Guru is a public-safe educational scaffold for healthcare quality im
 
 Source profiles live in `standards/`.
 
+Each profile requires these top-level fields:
+
+- `id` — the profile identifier, matching the lowercased file name without `.json`.
+- `name` — the profile's display name.
+- `summary` — a short description of the profile.
+- `use_for` — a list of tasks the profile supports.
+- `sources` — a list of source entries.
+
 Each source entry should include:
 
 - `title`
@@ -94,17 +102,26 @@ Run from the repo root:
 
 Changes go through a pull request; see [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
 
-The individual commands are:
+To set up the development environment and try the commands on synthetic examples:
 
 ```bash
 python3 -m pip install -e ".[dev]"
-python3 -m pytest -q
-python3 -m compileall improvement_guru tests scripts
 improvement-guru sources list
 improvement-guru charts run-chart examples/synthetic_ed_flow_qip.csv --value-column median_time_to_initial_assessment_minutes --date-column week --baseline-points 4 --out /tmp/ed_flow_run_chart.csv
 improvement-guru deid scan examples/synthetic_ward_audit.csv
+```
+
+The scan command should exit `1` when supported synthetic identifiers are present.
+
+## Release Readiness
+
+Run the local release smoke check before any public-facing release work:
+
+```bash
+python3 -m pytest -q
+python3 -m compileall improvement_guru tests scripts
 python3 scripts/release_check.py --install-smoke
 python3 scripts/check_sources.py --dry-run
 ```
 
-The scan command should exit `1` when supported synthetic identifiers are present.
+The smoke check proves UK and international profile scaffolds, source display, synthetic de-id scan/redact, the NHS 999 fixture convention, synthetic run-chart analysis, static skill-guide frontmatter and safety anchors, absence of tracked generated artifacts, and the installed `improvement-guru` console command path. See `docs/RELEASE_READINESS.md`.

@@ -341,6 +341,30 @@ def test_new_reports_malformed_bundled_profile(tmp_path, monkeypatch, capsys, co
     assert not target.exists()
 
 
+@pytest.mark.parametrize("regular_file", [False, True], ids=["absent", "regular-file"])
+def test_sources_list_reports_missing_profile_folder(tmp_path, monkeypatch, capsys, regular_file):
+    standards = tmp_path / "standards"
+    if regular_file:
+        standards.touch()
+    monkeypatch.setattr(sources, "STANDARDS_DIR", standards)
+
+    assert main(["sources", "list"]) == 2
+    assert capsys.readouterr() == ("", "Error: source profile folder is missing\n")
+
+
+@pytest.mark.parametrize("args", [["list"], ["show", "global"]], ids=["list", "show"])
+def test_sources_propagates_stdout_encoding_error(monkeypatch, args):
+    def fail_on_stdout(message, *, file=None):
+        if file is None:
+            raise UnicodeEncodeError("ascii", "é", 0, 1, "injected write failure")
+        print(message, file=file)
+
+    monkeypatch.setattr(cli, "print", fail_on_stdout, raising=False)
+
+    with pytest.raises(UnicodeEncodeError):
+        main(["sources", *args])
+
+
 @pytest.mark.parametrize(
     "args", [["new", "project", "--profile", "unknown"], ["sources", "list"], ["sources", "show", "australia"]],
     ids=["new-unknown", "sources-list", "sources-show"],
@@ -432,6 +456,17 @@ def test_new_terminal_guidance(tmp_path, monkeypatch, capsys, stdout_tty, stderr
         "Keep patient-identifiable data out of this toolkit.\n"
     )
     assert output.err == (guidance if stdout_tty and stderr_tty else "")
+
+
+def test_new_terminal_guidance_prints_normalised_profile(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+    monkeypatch.setattr(sys.stderr, "isatty", lambda: True)
+
+    assert main(["new", "ward_review", "--profile", " UK "]) == 0
+    assert capsys.readouterr().err.splitlines()[0] == (
+        "Created 9 files in ward_review (profile: uk)."
+    )
 
 
 def test_new_failure_in_terminal(tmp_path, monkeypatch, capsys):

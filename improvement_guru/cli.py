@@ -50,8 +50,6 @@ def main(argv: list[str] | None = None) -> int:
             if isinstance(exc, FileNotFoundError) and exc.filename == str(target):
                 return _error(f"parent folder does not exist: {target.parent}")
             return _error(exc)
-        if args.command == "sources" and args.sources_command == "show" and isinstance(exc, ValueError):
-            return _error(exc)
         raise
 
     getattr(args, "group_parser", parser).print_help(sys.stderr)
@@ -154,8 +152,9 @@ def _run_new(project_name: str, profile: str) -> int:
     for path in created:
         print(path)
     if sys.stdout.isatty() and sys.stderr.isatty():
+        normalised_profile = profile.lower().strip()
         print(
-            f"Created {len(created)} files in {target} (profile: {profile}).\n"
+            f"Created {len(created)} files in {target} (profile: {normalised_profile}).\n"
             "Next:\n"
             f"1. Open {target / 'charter.md'} and write your aim.\n"
             f"2. Read {target / 'source-map.md'} for the sources behind this profile.\n"
@@ -212,13 +211,25 @@ def _error(reason: str | OSError | ValueError) -> int:
 
 
 def _run_sources_list() -> int:
-    for profile in list_profiles():
+    try:
+        profiles = list_profiles()
+    except ValueError as exc:
+        if getattr(exc, "_bundled_resource_error", None) is not None:
+            raise
+        return _error(exc)
+    for profile in profiles:
         print(f"{profile['id']}\t{profile['name']}")
     return 0
 
 
 def _run_sources_show(profile: str) -> int:
-    print(format_profile(load_profile(profile)))
+    try:
+        source = load_profile(profile)
+    except ValueError as exc:
+        if getattr(exc, "_bundled_resource_error", None) is not None:
+            raise
+        return _error(exc)
+    print(format_profile(source))
     return 0
 
 
