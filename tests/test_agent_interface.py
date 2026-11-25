@@ -341,11 +341,28 @@ def test_new_reports_malformed_bundled_profile(tmp_path, monkeypatch, capsys, co
     assert not target.exists()
 
 
-def test_sources_list_reports_missing_profile_folder(tmp_path, monkeypatch, capsys):
-    monkeypatch.setattr(sources, "STANDARDS_DIR", tmp_path / "standards")
+@pytest.mark.parametrize("regular_file", [False, True], ids=["absent", "regular-file"])
+def test_sources_list_reports_missing_profile_folder(tmp_path, monkeypatch, capsys, regular_file):
+    standards = tmp_path / "standards"
+    if regular_file:
+        standards.touch()
+    monkeypatch.setattr(sources, "STANDARDS_DIR", standards)
 
     assert main(["sources", "list"]) == 2
     assert capsys.readouterr() == ("", "Error: source profile folder is missing\n")
+
+
+@pytest.mark.parametrize("args", [["list"], ["show", "global"]], ids=["list", "show"])
+def test_sources_propagates_stdout_encoding_error(monkeypatch, args):
+    def fail_on_stdout(message, *, file=None):
+        if file is None:
+            raise UnicodeEncodeError("ascii", "é", 0, 1, "injected write failure")
+        print(message, file=file)
+
+    monkeypatch.setattr(cli, "print", fail_on_stdout, raising=False)
+
+    with pytest.raises(UnicodeEncodeError):
+        main(["sources", *args])
 
 
 @pytest.mark.parametrize(

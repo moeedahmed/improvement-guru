@@ -17,7 +17,7 @@ _PROFILE_ID_PATTERN = re.compile(r"^[a-z0-9]+(?:[a-z0-9_-]*[a-z0-9])?$")
 def list_profiles() -> list[dict[str, Any]]:
     """Return all available source profiles in stable id order."""
 
-    if not STANDARDS_DIR.exists():
+    if not STANDARDS_DIR.is_dir():
         raise ValueError("source profile folder is missing")
     profiles = [_read_profile(path) for path in sorted(STANDARDS_DIR.glob("*.json"))]
     return sorted(profiles, key=lambda profile: profile["id"])
