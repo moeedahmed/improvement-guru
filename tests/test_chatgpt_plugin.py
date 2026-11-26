@@ -3,9 +3,7 @@ import json
 import os
 from pathlib import Path
 import shutil
-from struct import pack
 from zipfile import ZipFile
-from zlib import compress, crc32
 
 import pytest
 
@@ -141,106 +139,30 @@ def test_limits_sections_must_match(package_copy):
     assert any("## Limits sections" in error for error in validate_package(package_copy))
 
 
-def _png(width, height):
-    def chunk(kind, payload):
-        return pack(">I", len(payload)) + kind + payload + pack(">I", crc32(kind + payload))
-
-    return (
-        b"\x89PNG\r\n\x1a\n"
-        + chunk(b"IHDR", pack(">IIBBBBB", width, height, 8, 0, 0, 0, 0))
-        + chunk(b"IDAT", compress(bytes((width + 1) * height)))
-        + chunk(b"IEND", b"")
-    )
-
-
-# Complete 48×48 black images.
-PNG = _png(48, 48)
-JPEG = b64decode(
-    "/9j/4AAQSkZJRgABAgAAAQABAAD//gAPTGF2YzYzLjEuMTAyAP/bAEMACAQEBAQEBQUFBQUFBgYGBgYGBgYGBgYG"
-    "BgcHBwgICAcHBwYGBwcICAgICQkJCAgICAkJCgoKDAwLCw4ODhERFP/EAEsAAQEAAAAAAAAAAAAAAAAAAAAIAQEA"
-    "AAAAAAAAAAAAAAAAAAAAEAEAAAAAAAAAAAAAAAAAAAAAEQEAAAAAAAAAAAAAAAAAAAAA/8AAEQgAMAAwAwEiAAIR"
-    "AAMRAP/aAAwDAQACEQMRAD8An8AAAAAAAAAAAAAAAAAH/9k="
-)
-JPEG_SCAN = JPEG.index(b"\xff\xda")
-JPEG_SCAN_DATA = JPEG_SCAN + 2 + int.from_bytes(JPEG[JPEG_SCAN + 2:JPEG_SCAN + 4], "big")
-WEBP_LOSSLESS = b64decode("UklGRiAAAABXRUJQVlA4TBQAAAAvL8ALAAcQEf0PAAnh/3oxov+pBw==")
-WEBP_LOSSY = b64decode("UklGRjYAAABXRUJQVlA4ICoAAAAwAwCdASowADAAPpFIn0ulpCKho4gAsBIJaQAAG4G9Pg4AAP74zv0oAAA=")
-WEBP_EXTENDED = b64decode(
-    "UklGRmAAAABXRUJQVlA4WAoAAAAEAAAALwAALwAAVlA4TBQAAAAvL8ALAAcQEf0PAAnh/3oxov+pB1hNUCAlAAAA"
-    "PHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIvPgA="
-)
-
-
-def _webp(*chunks):
-    chunk = b"WEBP" + b"".join(chunks)
-    return b"RIFF" + pack("<I", len(chunk)) + chunk
-
-
 def _set_logo(package, suffix, data):
     name = f"assets/test-logo{suffix}"
     (package / name).write_bytes(data)
     _set_manifest_field(package, "extensions/com.openai/interface/logo", f"./{name}")
 
 
-@pytest.mark.parametrize(
-    ("suffix", "data"),
-    [
-        (".png", PNG),
-        (".jpg", JPEG),
-        (".jpeg", JPEG),
-        (".webp", WEBP_LOSSLESS),
-        (".webp", WEBP_LOSSY),
-        (".webp", WEBP_EXTENDED),
-    ],
-)
-def test_raster_images_match_format(package_copy, suffix, data):
-    _set_logo(package_copy, suffix, data)
-    assert validate_package(package_copy) == []
-    assert build_chatgpt_plugin._raster_dimensions(data, suffix) == (48, 48)
+def test_raster_logo_is_rejected(package_copy):
+    # Complete 48×48 black PNG.
+    png = b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAAAAAByaaZbAAAAGUlEQVR4nO3BgQAAAADDoPlT"
+        "3+AEVQEA8AwJMAAB6TBqdgAAAABJRU5ErkJggg=="
+    )
+    _set_logo(package_copy, ".png", png)
 
-    _set_logo(package_copy, suffix, WEBP_LOSSLESS if suffix == ".png" else PNG)
-    assert any(f"valid {suffix} image" in error for error in validate_package(package_copy))
-
-
-@pytest.mark.parametrize(
-    ("suffix", "data"),
-    [
-        pytest.param(".png", PNG[:33], id="png-header-only"),
-        pytest.param(".png", PNG[:33] + PNG[-12:], id="png-missing-idat"),
-        pytest.param(".png", PNG[:-12], id="png-missing-iend"),
-        pytest.param(".png", PNG[:-13] + bytes([PNG[-13] ^ 1]) + PNG[-12:], id="png-bad-idat-crc"),
-        pytest.param(".png", PNG + b"extra", id="png-trailing-data"),
-        pytest.param(".jpg", JPEG[:JPEG_SCAN], id="jpeg-header-only"),
-        pytest.param(".jpg", JPEG[:JPEG_SCAN] + JPEG[-2:], id="jpeg-missing-sos"),
-        pytest.param(".jpg", JPEG[:JPEG_SCAN_DATA] + JPEG[-2:], id="jpeg-empty-scan"),
-        pytest.param(".jpeg", JPEG[:-2], id="jpeg-missing-eoi"),
-        pytest.param(".webp", WEBP_LOSSLESS[:-1], id="webp-wrong-riff-size"),
-        pytest.param(".webp", _webp(b"VP8L" + pack("<I", 5) + WEBP_LOSSLESS[20:25] + b"\0"), id="webp-header-only"),
-        pytest.param(".webp", _webp(WEBP_EXTENDED[12:30]), id="webp-missing-image"),
-        pytest.param(".webp", _webp(WEBP_EXTENDED[12:35]), id="webp-truncated-image-chunk"),
-    ],
-)
-def test_incomplete_raster_images_are_rejected(package_copy, suffix, data):
-    _set_logo(package_copy, suffix, data)
-    assert any(f"valid {suffix} image" in error for error in validate_package(package_copy))
-
-
-@pytest.mark.parametrize(
-    ("width", "height", "expected"),
-    [
-        (47, 47, "at least 48×48"),
-        (48, 49, "image must be square"),
-        (4097, 4097, "raster image must not exceed 4096×4096"),
-    ],
-)
-def test_raster_dimension_limits(package_copy, width, height, expected):
-    _set_logo(package_copy, ".png", _png(width, height))
-    assert any(expected in error for error in validate_package(package_copy))
+    assert validate_package(package_copy) == [
+        "interface.logo: raster icons are not checked by this script "
+        "(it cannot fully decode them without extra libraries); use a square SVG, "
+        "or check the raster image by hand before upload"
+    ]
 
 
 def test_branding_image_size_limit(package_copy):
-    _set_logo(package_copy, ".png", _png(48, 48))
-    with (package_copy / "assets/test-logo.png").open("r+b") as image:
+    _set_logo(package_copy, ".svg", b'<svg width="48" height="48"/>')
+    with (package_copy / "assets/test-logo.svg").open("r+b") as image:
         image.truncate(5 * 1024**2 + 1)
     assert "interface.logo image must not exceed 5 MiB" in validate_package(package_copy)
 

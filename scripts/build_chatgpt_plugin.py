@@ -8,14 +8,12 @@ import json
 import math
 from pathlib import Path, PurePosixPath
 import re
-from struct import unpack
 import sys
 from tempfile import NamedTemporaryFile
 from unicodedata import normalize
 from urllib.parse import urlsplit
 from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
-from zlib import crc32
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -37,9 +35,6 @@ MAX_MEMBER_BYTES = 100 * 1024**2
 MAX_EXTRACTED_BYTES = 512 * 1024**2
 MAX_ARCHIVE_ENTRIES = 5_000
 MAX_MEMBER_SEGMENTS = 20
-JPEG_FRAME_MARKERS = {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7,
-                      0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF}
-JPEG_SCAN_MARKER = re.compile(rb"\xff+([\x00-\xfe])")
 SVG_NUMBER = re.compile(r"[+-]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
 PLUGIN_NAME = re.compile(r"[a-z0-9]+(?:[-_][a-z0-9]+)*")
 SKILL_NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
@@ -145,121 +140,6 @@ def _luminance(colour: str) -> float:
     return sum(weight * channel for weight, channel in zip((0.2126, 0.7152, 0.0722), linear))
 
 
-def _jpeg_scan_end(data: bytes, start: int) -> int | None:
-    """Find the next segment marker, skipping stuffed bytes and restart markers."""
-    has_data = False
-    for match in JPEG_SCAN_MARKER.finditer(data, start):
-        marker = match[1][0]
-        has_data |= match.start() > start or marker == 0
-        if marker != 0 and not 0xD0 <= marker <= 0xD7:
-            return match.start() if has_data else None
-        start = match.end()
-    return None
-
-
-def _jpeg_dimensions(data: bytes) -> tuple[int, int] | None:
-    if not data.startswith(b"\xff\xd8") or not data.endswith(b"\xff\xd9"):
-        return None
-    dimensions = None
-    saw_scan = False
-    offset = 2
-    while offset < len(data) and data[offset] == 0xFF:
-        while offset < len(data) and data[offset] == 0xFF:
-            offset += 1
-        marker = data[offset]
-        offset += 1
-        if marker == 0xD9:
-            return dimensions if saw_scan and offset == len(data) else None
-        if marker in {0, 0xD8} or 0xD0 <= marker <= 0xD7:
-            return None
-        if marker == 1:  # Standalone TEM marker.
-            continue
-        if offset + 2 > len(data):
-            return None
-        length = int.from_bytes(data[offset:offset + 2], "big")
-        end = offset + length
-        if length < 2 or end > len(data):
-            return None
-        if marker in JPEG_FRAME_MARKERS:
-            if length < 8 or length != 8 + 3 * data[offset + 7] or not data[offset + 7]:
-                return None
-            height, width = unpack(">HH", data[offset + 3:offset + 7])
-            dimensions = width, height
-        if marker == 0xDA:
-            if dimensions is None or length < 8 or length != 6 + 2 * data[offset + 2]:
-                return None
-            scan_end = _jpeg_scan_end(data, end)
-            if scan_end is None:
-                return None
-            saw_scan = True
-            end = scan_end
-        offset = end
-    return None
-
-
-def _webp_frame_dimensions(kind: bytes, payload: bytes) -> tuple[int, int] | None:
-    if kind == b"VP8L" and len(payload) > 5 and payload[0] == 0x2F and payload[4] >> 5 == 0:
-        bits = int.from_bytes(payload[1:5], "little")
-        return (bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1
-    if kind == b"VP8 " and len(payload) > 10 and not payload[0] & 1 and payload[3:6] == b"\x9d\x01\x2a":
-        width, height = unpack("<HH", payload[6:10])
-        return width & 0x3FFF, height & 0x3FFF
-    return None
-
-
-def _webp_dimensions(data: bytes) -> tuple[int, int] | None:
-    if len(data) < 20 or data[:4] != b"RIFF" or data[8:12] != b"WEBP":
-        return None
-    riff_size = int.from_bytes(data[4:8], "little")
-    if riff_size + 8 != len(data):
-        return None
-    canvas = frame = None
-    offset = 12
-    while offset < len(data):
-        if offset + 8 > len(data):
-            return None
-        kind = data[offset:offset + 4]
-        chunk_size = int.from_bytes(data[offset + 4:offset + 8], "little")
-        end = offset + 8 + chunk_size
-        next_chunk = end + chunk_size % 2
-        if next_chunk > len(data):
-            return None
-        if kind == b"VP8X":
-            if offset != 12 or chunk_size != 10:
-                return None
-            canvas = (1 + int.from_bytes(data[end - 6:end - 3], "little"),
-                      1 + int.from_bytes(data[end - 3:end], "little"))
-        elif kind in {b"VP8 ", b"VP8L"}:
-            frame = _webp_frame_dimensions(kind, data[offset + 8:end])
-            if frame is None:
-                return None
-        offset = next_chunk
-    return (canvas or frame) if frame is not None else None
-
-
-def _raster_dimensions(data: bytes, suffix: str) -> tuple[int, int] | None:
-    if suffix in {".jpg", ".jpeg"}:
-        return _jpeg_dimensions(data)
-    if suffix == ".webp":
-        return _webp_dimensions(data)
-    if len(data) < 33 or not data.startswith(b"\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR"):
-        return None
-    offset = 8
-    saw_image_data = False
-    while offset + 12 <= len(data):
-        length, kind = unpack(">I4s", data[offset:offset + 8])
-        end = offset + 8 + length
-        if end + 4 > len(data) or crc32(data[offset + 4:end]) != int.from_bytes(data[end:end + 4], "big"):
-            return None
-        if kind == b"IEND":
-            if saw_image_data and length == 0 and end + 4 == len(data):
-                return unpack(">II", data[16:24])
-            return None
-        saw_image_data |= kind == b"IDAT" and length > 0
-        offset = end + 4
-    return None
-
-
 def _svg_dimensions(data: bytes) -> tuple[float, float] | None:
     try:
         svg = ElementTree.fromstring(data)
@@ -283,27 +163,25 @@ def _validate_icon(root: Path, field: str, value: object, errors: list[str]) -> 
     if path is None or not _included(path.relative_to(root)) or path.suffix.lower() not in IMAGE_SUFFIXES:
         errors.append(f"interface.{field} must be an existing ./-relative packaged image")
         return
+    if path.suffix.lower() != ".svg":
+        errors.append(
+            f"interface.{field}: raster icons are not checked by this script "
+            "(it cannot fully decode them without extra libraries); use a square SVG, "
+            "or check the raster image by hand before upload"
+        )
+        return
     with path.open("rb") as image:
         data = image.read(MAX_IMAGE_BYTES + 1)
     if len(data) > MAX_IMAGE_BYTES:
         errors.append(f"interface.{field} image must not exceed 5 MiB")
         return
-    suffix = path.suffix.lower()
-    if suffix == ".svg":
-        dimensions = _svg_dimensions(data)
-        if dimensions is None:
-            errors.append(f"interface.{field} SVG must have a numeric viewBox or width and height")
-            return
-    else:
-        dimensions = _raster_dimensions(data, suffix)
-        if dimensions is None:
-            errors.append(f"interface.{field} must be a complete, valid {suffix} image")
-            return
+    dimensions = _svg_dimensions(data)
+    if dimensions is None:
+        errors.append(f"interface.{field} SVG must have a numeric viewBox or width and height")
+        return
     width, height = dimensions
     if not width == height >= 48:
         errors.append(f"interface.{field} image must be square and at least 48×48")
-    elif suffix != ".svg" and width > 4096:
-        errors.append(f"interface.{field} raster image must not exceed 4096×4096")
 
 
 def _validate_interface(root: Path, interface: dict, errors: list[str]) -> None:
