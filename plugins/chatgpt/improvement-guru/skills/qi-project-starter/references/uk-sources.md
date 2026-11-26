@@ -1,4 +1,4 @@
-# UK sources (checked list)
+# UK-focused sources (checked list)
 
 Cite only these sources in a starter pack, with their links. The publisher last checked that each link opened on 26 November 2026. Links can change, so tell the user to open the link and check it is current before relying on it. Improvement Guru is not affiliated with or endorsed by any of these organisations.
 

@@ -1,17 +1,13 @@
-# Terms of use: Improvement Guru for ChatGPT
+# Terms of use
 
-Draft for review. Last updated: [date of publication].
+Last updated: 26 November 2026.
 
-Improvement Guru for ChatGPT is published by Moeed Ahmed, an individual based in the United Kingdom. By using it you agree to these terms.
+Moeed Ahmed publishes Improvement Guru for ChatGPT as an individual based in the United Kingdom. The plugin is free and its files are available under the [MIT licence](https://github.com/moeedahmed/improvement-guru/blob/main/LICENSE).
 
-1. **What it is.** An educational planning aid that helps you structure a quality improvement project using fictional or generic examples. It is free to use.
-2. **What it is not.** It is not clinical advice, not clinical decision support and not a medical device. It is not QI, audit, ethics, information governance, Caldicott or clinical governance approval.
-3. **Your responsibilities.** Do not enter patient-identifiable data or case-level details. Check every source and figure. Confirm the project route, standards and data handling with your local QI, audit, clinical governance and information governance teams before using any output in real work. You remain responsible for the decisions you make.
-4. **Outputs.** ChatGPT writes the outputs. They may be incomplete or wrong, so review them before use.
-5. **No warranty.** The plugin is provided "as is", without warranties of any kind, to the extent the law allows.
-6. **Liability.** To the extent the law allows, I am not liable for any loss arising from use of the plugin or its outputs. Nothing in these terms limits liability that cannot be limited by law.
-7. **Changes and withdrawal.** I may update or withdraw the plugin. I will date any change to these terms.
-8. **Open source.** The plugin's files are available under the MIT licence in the Improvement Guru repository: https://github.com/moeedahmed/improvement-guru
-9. **No endorsement.** Improvement Guru is not affiliated with or endorsed by OpenAI, the NHS or any organisation whose guidance it links to.
-10. **Law.** These terms are governed by the law of England and Wales.
-11. **Contact.** [SUPPORT CONTACT: placeholder for the publisher to confirm]
+Improvement Guru helps you practise planning a quality improvement project. Use a fictional scenario or describe the service process in general terms. Use made-up figures only. Keep real service data, patient or case details and uploads out of the conversation.
+
+The output is a learning draft. Check the figures and sources, and confirm the project route, clinical governance and data handling with your local teams before applying anything to real work. Clinical decisions and formal approvals belong with the appropriate local teams.
+
+Access to the plugin is through ChatGPT and subject to [OpenAI's applicable terms](https://openai.com/policies/). Improvement Guru is independent of OpenAI, the NHS and the organisations whose guidance it links to.
+
+These terms preserve any rights you have under applicable law. The [privacy notice](./PRIVACY.md) explains how support data is handled. The [support page](./SUPPORT.md) explains how to ask for help.

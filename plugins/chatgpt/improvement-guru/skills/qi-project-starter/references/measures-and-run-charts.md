@@ -16,7 +16,7 @@ Write each definition so that two people would count the same way:
 - the type of data source, in general terms (for example "the department's electronic record" or "a paper tally sheet");
 - how often it is collected (weekly is a good default) and which role collects it.
 
-Collect aggregate figures only, such as weekly counts or a weekly median time. A QI measure rarely needs anything that identifies a person, and individual times on a named shift can identify people.
+Plan for aggregate reporting, such as weekly counts or a weekly median time. Use only made-up figures in this skill. A QI measure rarely needs anything that identifies a person, and individual times on a named shift can identify people.
 
 ## Run charts
 

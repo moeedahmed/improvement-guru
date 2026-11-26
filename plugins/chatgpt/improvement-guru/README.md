@@ -1,6 +1,6 @@
 # Improvement Guru for ChatGPT (skills-only plugin)
 
-A free, skills-only package for the ChatGPT plugin directory. One workflow, **QI Project Starter**, turns a fictional or generic service problem into a QI starter pack: a project charter, a SMART aim, measures and a first PDSA test, with links to a checked list of UK sources and the local checks still needed.
+A free, skills-only package for the ChatGPT plugin directory. One workflow, **QI Project Starter**, uses made-up figures to turn a fictional or generic service problem into a QI starter pack: a project charter, a SMART aim, measures and a first PDSA test, with links to a checked list of UK-focused sources and the local checks still needed.
 
 **Status:** draft for the publisher's review. It has not been submitted, published or tested inside ChatGPT.
 
@@ -8,7 +8,7 @@ A free, skills-only package for the ChatGPT plugin directory. One workflow, **QI
 
 - `plugin.json`: the manifest (Agent Plugins schema, with OpenAI listing fields under `extensions.com.openai`).
 - `skills/qi-project-starter/SKILL.md`: the workflow.
-- `skills/qi-project-starter/references/`: the checked UK sources, measures and run-chart rules, the quality rubric, three fictional scenarios and a worked example.
+- `skills/qi-project-starter/references/`: the checked UK-focused sources, measures and run-chart rules, the quality rubric, three fictional scenarios and a worked example.
 - `skills/qi-project-starter/assets/starter-pack-template.md`: the output template.
 - `assets/logo.svg` and `assets/icon.svg`: the listing and composer icons.
 - `PRIVACY.md`, `TERMS.md` and `SUPPORT.md`: drafts for review.

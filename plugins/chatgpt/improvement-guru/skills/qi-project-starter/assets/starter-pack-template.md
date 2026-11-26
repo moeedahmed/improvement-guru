@@ -1,6 +1,6 @@
 # QI starter pack: [project title]
 
-Status: draft for learning and planning. All figures are [fictional / illustrative / user estimates]. Confirm everything locally.
+Status: draft for learning and planning. All project figures are fictional. Confirm everything locally.
 
 ## 1. Project charter
 
@@ -68,4 +68,4 @@ Status: not yet done. Each check needs confirming with the local team before any
 
 ## Limits
 
-This pack is an educational planning aid made with a fictional or generic example. It is not clinical advice, not clinical decision support, and not QI, audit, ethics, IG or governance approval. It has not checked local policies, standards or data. Do not enter patient-identifiable or case-level details. Before using any part of it in real work, confirm the project route, the standards and the data handling with your local QI, audit, clinical governance and IG teams.
+This pack is an educational planning aid made with a fictional or generic example. It is not clinical advice, not clinical decision support, and not QI, audit, ethics, IG or governance approval. It has not checked local policies, standards or data. Use made-up project figures only. Do not enter real service figures, patient or case details, or uploads. Before using any part of it in real work, confirm the project route, the standards and the data handling with your local QI, audit, clinical governance and IG teams.

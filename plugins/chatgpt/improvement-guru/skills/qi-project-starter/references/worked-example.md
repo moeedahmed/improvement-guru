@@ -56,14 +56,14 @@ Change ideas considered:
 3. Put a prompt card at triage that points to the department's existing analgesia guideline (driver: uncertainty about the local pathway). This needs the guideline owner's agreement before any test.
 4. Add a short reminder to the start-of-shift huddle (driver: awareness).
 
-Chosen change and why: idea 2. It is small, needs no system change, is easy to stop and can be tried on one shift.
+Chosen change and why: idea 2. It is small and can be stopped on the same shift. It assumes the board already supports flags and that local clinical governance and information governance approve who can see them.
 
 | Step | Detail |
 | --- | --- |
-| Plan | The triage nurse adds a severe-pain flag to the board entry for each adult triaged with severe pain, and the nurse in charge reviews flagged patients on the board at an interval agreed locally [to confirm locally]. One triage nurse and the nurse in charge, adult area, one weekday day shift [date to confirm locally]. Prediction: at least 8 of the next 10 flagged patients get first analgesia within 30 minutes of arrival. Data: a tally sheet for the shift that counts how many flagged patients got first analgesia within 30 minutes of arrival and how many did not, with no names, numbers or individual times. The time to triage for the shift comes from the department's routine report. Stop rule: stop if staff report that triage is being delayed, or raise a safety or workload concern. |
+| Plan | The triage nurse adds a severe-pain flag to the board entry for each adult triaged with severe pain, and the nurse in charge reviews flagged patients on the board at an interval agreed locally [to confirm locally]. One triage nurse and the nurse in charge, adult area, one weekday day shift [date to confirm locally]. If fewer than ten eligible patients are seen, report the fictional test as incomplete and plan a further cycle. Prediction: at least 8 of the next 10 flagged patients get first analgesia within 30 minutes of arrival. Data: a tally sheet for the shift that counts how many flagged patients got first analgesia within 30 minutes of arrival and how many did not, with no names, numbers or individual times. The time to triage for the shift comes from the department's routine report. Stop rule: stop if staff report that triage is being delayed, or raise a safety or workload concern. |
 | Do | Record what happened, any changes to the plan and staff comments. |
 | Study | Compare the results with the prediction, check the time to triage on that shift, and ask both staff members what helped and what got in the way. |
-| Act | Adopt (try it on more shifts) if 8 or more of 10 get analgesia within 30 minutes with no delay to triage. Adapt (change who checks, or how often) if 5 to 7 do. Abandon (test another idea) if fewer than 5 do, or if triage is delayed. |
+| Act | Adopt (try it on more shifts) if 8 or more of 10 get analgesia within 30 minutes with no delay to triage. Apply those numeric thresholds only after ten patients are counted. Adapt (change who checks, or how often) if 5 to 7 do. Abandon (test another idea) if fewer than 5 do, or if triage is delayed. |
 
 ## 5. Sources
 
@@ -89,4 +89,4 @@ Status: not yet done. Each check needs confirming with the local team before any
 
 ## Limits
 
-This pack is an educational planning aid made with a fictional or generic example. It is not clinical advice, not clinical decision support, and not QI, audit, ethics, IG or governance approval. It has not checked local policies, standards or data. Do not enter patient-identifiable or case-level details. Before using any part of it in real work, confirm the project route, the standards and the data handling with your local QI, audit, clinical governance and IG teams.
+This pack is an educational planning aid made with a fictional or generic example. It is not clinical advice, not clinical decision support, and not QI, audit, ethics, IG or governance approval. It has not checked local policies, standards or data. Use made-up project figures only. Do not enter real service figures, patient or case details, or uploads. Before using any part of it in real work, confirm the project route, the standards and the data handling with your local QI, audit, clinical governance and IG teams.

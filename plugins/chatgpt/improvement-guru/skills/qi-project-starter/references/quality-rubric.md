@@ -34,11 +34,11 @@ If the type is unclear, say so and suggest the user confirms it with the local Q
 - A written prediction.
 - Adopt, adapt and abandon thresholds set before the test starts.
 - A stop rule for safety or workload.
-- No change to clinical treatment, unless it is flagged as needing the local guideline owner and clinical governance approval.
+- The proposed change is to a process. Clinical treatment, prescribing and protocols stay outside this workflow.
 
 ## Final checks
 
-- Every figure is labelled fictional, illustrative or user estimate.
+- All project figures are made up and labelled fictional. No real service figure or estimate is echoed or used.
 - Every cited source is from `uk-sources.md`, with its link.
 - Nothing local was invented; unknowns are marked [to confirm locally].
 - No identifiable or case-level detail appears anywhere in the pack.

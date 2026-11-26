@@ -1,10 +1,7 @@
-# Support: Improvement Guru for ChatGPT
+# Support for Improvement Guru
 
-Proposed support route, for the publisher to confirm: open an issue at https://github.com/moeedahmed/improvement-guru/issues. Issues are public.
+Use [GitHub Issues](https://github.com/moeedahmed/improvement-guru/issues) to report a problem or ask a question. Issues are public.
 
-- Never include patient details, case details, staff names or other identifiable information.
-- Say what you asked, what you expected and what happened.
+Describe what happened using a fictional example. Leave out patient or staff details, real figures, screenshots, records and private contact details. To discuss a privacy request, ask for a private contact route without adding details.
 
-Other contact: [SUPPORT CONTACT: placeholder for the publisher to confirm]
-
-Support is provided on a best-efforts basis by one maintainer.
+Support is provided on a best-efforts basis. See the [privacy notice](./PRIVACY.md) for how support data is handled.

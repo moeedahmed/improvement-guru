@@ -1,51 +1,23 @@
-# Privacy policy: Improvement Guru for ChatGPT
+# Privacy notice
 
-Draft for review. Last updated: [date of publication].
+Last updated: 26 November 2026.
 
-Improvement Guru for ChatGPT is published by Moeed Ahmed, an individual based in the United Kingdom ("I" or "me").
+Moeed Ahmed publishes Improvement Guru for ChatGPT as an individual based in the United Kingdom. He is responsible for personal data he handles when providing support.
 
-## Short version
+## Using Improvement Guru
 
-Improvement Guru is a set of instructions and reference files that run inside ChatGPT. It has no server, no account and no analytics. I do not receive your prompts, your conversations or what ChatGPT writes for you.
+The plugin has no server, account, analytics or payment system. The publisher does not receive your prompts, conversations or replies from the plugin. Use made-up project figures only. Keep real service figures, patient or case details and uploads out of the conversation.
 
-## What Improvement Guru collects
+OpenAI processes your conversation under its [privacy policy](https://openai.com/policies/privacy-policy/). You can manage your conversation and data settings in ChatGPT. If OpenAI makes aggregate listing statistics available to the publisher, those figures are for understanding use of the listing.
 
-Nothing. The plugin contains no code that sends data anywhere.
+## Contacting support
 
-## What ChatGPT processes
+Use [GitHub Issues](https://github.com/moeedahmed/improvement-guru/issues) for a question or reproducible problem. The issue, your public GitHub username and any material you post are visible to others. GitHub hosts the discussion under its [privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). Share only a short fictional reproduction. Leave out patient or staff details, private contact information, real service figures, records and screenshots.
 
-When you use the plugin, your conversation is processed by OpenAI as part of ChatGPT, under OpenAI's own privacy policy: https://openai.com/policies/privacy-policy/. Your ChatGPT data controls, such as chat history and memory settings, are managed in ChatGPT, not by me.
+The publisher uses the message and the username or contact information that comes with it to respond and maintain the plugin. The lawful basis is legitimate interests in providing support and fixing problems. Support details are not used for marketing or sold.
 
-## What I might see
+The publisher keeps any private support messages, copies or notes for up to 90 days after the request is closed, to handle follow-up and verify fixes. Records needed for a legal obligation or an ongoing dispute may be kept for as long as that need continues. The publisher does not routinely copy public GitHub threads. Public posts can stay visible on GitHub as a troubleshooting record, and GitHub or others may keep copies. The 90-day period applies to the publisher's private records.
 
-- If OpenAI's developer dashboard shows aggregate listing figures, such as install counts, I may see those. They do not identify you.
-- If you contact me for support, I receive what you send.
+## Your choices
 
-## Support requests
-
-- What: the message you send and the contact details or username that come with it.
-- Why: to answer your request and fix problems.
-- Who else sees it: [depends on the confirmed support route; GitHub Issues are public and hosted by GitHub].
-- How long I keep it: [support retention period to confirm]. You can ask me to delete it at any time.
-- Lawful basis under UK GDPR: legitimate interests, to answer your request.
-- Please never include patient details or other identifiable health information in a support request.
-
-## Patient and health information
-
-Do not enter patient-identifiable information, case details or patient-level data. The plugin is designed to work with fictional or generic descriptions only, and it does not ask for health information about you or anyone else.
-
-## Children
-
-The plugin is suitable for general audiences. It is not directed at children under 13.
-
-## Your rights
-
-For any support data I hold, you can ask to see, correct or delete it, or object to its use. You can complain to the Information Commissioner's Office: https://ico.org.uk/make-a-complaint/. You can remove the plugin from ChatGPT at any time.
-
-## Changes
-
-I will date any change to this policy here.
-
-## Contact
-
-[SUPPORT CONTACT: placeholder for the publisher to confirm]
+You can request access to, correction or deletion of personal data the publisher holds, or object to or ask to restrict its use. Use the [support page](./SUPPORT.md) to request a private way to discuss a privacy issue. In a public issue, say only that you need a private contact route. You can also [complain to the ICO](https://ico.org.uk/make-a-complaint/).
