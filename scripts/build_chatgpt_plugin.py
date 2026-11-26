@@ -8,15 +8,20 @@ import json
 import math
 from pathlib import Path, PurePosixPath
 import re
+from struct import unpack
 import sys
 from tempfile import NamedTemporaryFile
+from unicodedata import normalize
 from urllib.parse import urlsplit
 from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
+from zlib import crc32
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_ROOT = REPO_ROOT / "plugins/chatgpt/improvement-guru"
+PLUGIN_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+PROHIBITED_FIELDS = {"mcp", "mcpServers", "apps", "hooks", "review"}
 ROOT_FILES = {"plugin.json", "README.md", "PRIVACY.md", "TERMS.md", "SUPPORT.md"}
 EXCLUDED = {"REVIEW_TESTS.md", "SUBMISSION_CHECKLIST.md", "__pycache__"}
 CATEGORIES = {
@@ -25,6 +30,16 @@ CATEGORIES = {
     "Finance", "Healthcare", "Travel", "Entertainment", "Other",
 }
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".svg"}
+# OpenAI submission errors and listing metadata document these limits.
+MAX_IMAGE_BYTES = 5 * 1024**2
+MAX_ARCHIVE_BYTES = 100_000_000
+MAX_MEMBER_BYTES = 100 * 1024**2
+MAX_EXTRACTED_BYTES = 512 * 1024**2
+MAX_ARCHIVE_ENTRIES = 5_000
+MAX_MEMBER_SEGMENTS = 20
+JPEG_FRAME_MARKERS = {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7,
+                      0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF}
+SVG_NUMBER = re.compile(r"[+-]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
 PLUGIN_NAME = re.compile(r"[a-z0-9]+(?:[-_][a-z0-9]+)*")
 SKILL_NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 NUMBER = r"(?:0|[1-9][0-9]*)"
@@ -72,34 +87,43 @@ def _local_file(root: Path, value: object, *, dot_prefix: bool = False) -> Path 
     return None
 
 
-def _validate_urls(value: object, location: str, errors: list[str]) -> None:
+def _valid_url(value: object, limit: int | None) -> bool:
+    if (
+        not isinstance(value, str) or (limit is not None and len(value) > limit)
+        or not value.startswith("https://") or "\\" in value
+        or any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in value)
+    ):
+        return False
+    try:
+        url = urlsplit(value)
+        return bool(url.hostname) and url.username is None
+    except ValueError:
+        return False
+
+
+def _validate_manifest_fields(value: object, location: str, errors: list[str]) -> None:
     if isinstance(value, list):
         for index, item in enumerate(value):
-            _validate_urls(item, f"{location}[{index}]", errors)
+            _validate_manifest_fields(item, f"{location}[{index}]", errors)
     if not isinstance(value, dict):
         return
     for key, item in value.items():
         field = f"{location}.{key}"
-        if key.lower().endswith("url"):
-            try:
-                valid = (
-                    isinstance(item, str)
-                    and len(item) <= 1024
-                    and item.startswith("https://")
-                    and not any(char.isspace() or ord(char) < 32 for char in item)
-                    and bool(urlsplit(item).hostname)
-                )
-            except ValueError:
-                valid = False
-            if not valid:
-                errors.append(f"{field} must be an HTTPS URL of at most 1024 characters")
-        _validate_urls(item, field, errors)
+        if key in PROHIBITED_FIELDS:
+            errors.append(f"{field} is prohibited in a skills-only package")
+        repository_url = field == "plugin.json.repository" and isinstance(item, str)
+        if key.lower().endswith("url") or field == "plugin.json.homepage" or repository_url:
+            limit = 2048 if field in {"plugin.json.homepage", "plugin.json.author.url"} else 1024
+            if repository_url:
+                limit = None
+            if not _valid_url(item, limit):
+                length = f" of at most {limit} characters" if limit is not None else ""
+                errors.append(f"{field} must be an HTTPS URL{length} with a host and no credentials")
+        _validate_manifest_fields(item, field, errors)
 
 
 def _luminance(colour: str) -> float:
     digits = colour[1:]
-    if len(digits) == 3:
-        digits = "".join(digit * 2 for digit in digits)
     channels = [int(digits[index:index + 2], 16) / 255 for index in (0, 2, 4)]
     linear = [
         channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
@@ -108,25 +132,110 @@ def _luminance(colour: str) -> float:
     return sum(weight * channel for weight, channel in zip((0.2126, 0.7152, 0.0722), linear))
 
 
+def _jpeg_dimensions(data: bytes) -> tuple[int, int] | None:
+    if not data.startswith(b"\xff\xd8"):
+        return None
+    offset = 2
+    while offset < len(data) and data[offset] == 0xFF:
+        while offset < len(data) and data[offset] == 0xFF:
+            offset += 1
+        if offset + 3 > len(data):
+            break
+        marker = data[offset]
+        if marker in {0, 0xD8, 0xD9, 0xDA} or 0xD0 <= marker <= 0xD7:
+            break
+        if marker == 1:  # Standalone TEM marker.
+            offset += 1
+            continue
+        offset += 1
+        length = int.from_bytes(data[offset:offset + 2], "big")
+        if length < 2 or offset + length > len(data):
+            break
+        if marker in JPEG_FRAME_MARKERS:
+            if length < 8 or length != 8 + 3 * data[offset + 7] or not data[offset + 7]:
+                break
+            height, width = unpack(">HH", data[offset + 3:offset + 7])
+            return width, height
+        offset += length
+    return None
+
+
+def _webp_dimensions(data: bytes) -> tuple[int, int] | None:
+    if len(data) < 20 or data[:4] != b"RIFF" or data[8:12] != b"WEBP":
+        return None
+    riff_size = int.from_bytes(data[4:8], "little")
+    chunk_size = int.from_bytes(data[16:20], "little")
+    if riff_size + 8 != len(data) or 20 + chunk_size + (chunk_size % 2) > len(data):
+        return None
+    kind = data[12:16]
+    if kind == b"VP8X" and chunk_size == 10:
+        return (1 + int.from_bytes(data[24:27], "little"),
+                1 + int.from_bytes(data[27:30], "little"))
+    if kind == b"VP8L" and chunk_size >= 5 and data[20] == 0x2F and data[24] >> 5 == 0:
+        bits = int.from_bytes(data[21:25], "little")
+        return (bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1
+    if kind == b"VP8 " and chunk_size >= 10 and not data[20] & 1 and data[23:26] == b"\x9d\x01\x2a":
+        width, height = unpack("<HH", data[26:30])
+        return width & 0x3FFF, height & 0x3FFF
+    return None
+
+
+def _raster_dimensions(data: bytes, suffix: str) -> tuple[int, int] | None:
+    if suffix in {".jpg", ".jpeg"}:
+        return _jpeg_dimensions(data)
+    if suffix == ".webp":
+        return _webp_dimensions(data)
+    if len(data) < 33 or not data.startswith(b"\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR"):
+        return None
+    if crc32(data[12:29]) != int.from_bytes(data[29:33], "big"):
+        return None
+    return unpack(">II", data[16:24])
+
+
+def _svg_dimensions(data: bytes) -> tuple[float, float] | None:
+    try:
+        svg = ElementTree.fromstring(data)
+    except (ElementTree.ParseError, LookupError, ValueError):
+        return None
+    if svg.tag not in {"svg", "{http://www.w3.org/2000/svg}svg"}:
+        return None
+    if "viewBox" in svg.attrib:
+        values = re.split(r"\s*,\s*|\s+", svg.attrib["viewBox"].strip())
+        if len(values) != 4:
+            return None
+    else:
+        values = [svg.get(field, "").strip() for field in ("width", "height")]
+    if not all(SVG_NUMBER.fullmatch(value) and math.isfinite(float(value)) for value in values):
+        return None
+    return float(values[-2]), float(values[-1])
+
+
 def _validate_icon(root: Path, field: str, value: object, errors: list[str]) -> None:
     path = _local_file(root, value, dot_prefix=True)
     if path is None or not _included(path.relative_to(root)) or path.suffix.lower() not in IMAGE_SUFFIXES:
         errors.append(f"interface.{field} must be an existing ./-relative packaged image")
         return
-    if path.suffix.lower() != ".svg":
+    with path.open("rb") as image:
+        data = image.read(MAX_IMAGE_BYTES + 1)
+    if len(data) > MAX_IMAGE_BYTES:
+        errors.append(f"interface.{field} image must not exceed 5 MiB")
         return
-    try:
-        svg = ElementTree.parse(path).getroot()
-        x, y, width, height = map(float, svg.attrib["viewBox"].replace(",", " ").split())
-        valid = (
-            svg.tag in {"svg", "{http://www.w3.org/2000/svg}svg"}
-            and all(math.isfinite(value) for value in (x, y, width, height))
-            and width == height >= 48
-        )
-    except (ElementTree.ParseError, LookupError, ValueError):
-        valid = False
-    if not valid:
-        errors.append(f"interface.{field} SVG must have a square viewBox of at least 48")
+    suffix = path.suffix.lower()
+    if suffix == ".svg":
+        dimensions = _svg_dimensions(data)
+        if dimensions is None:
+            errors.append(f"interface.{field} SVG must have a numeric viewBox or width and height")
+            return
+    else:
+        dimensions = _raster_dimensions(data, suffix)
+        if dimensions is None:
+            errors.append(f"interface.{field} must have a valid {suffix} image header")
+            return
+    width, height = dimensions
+    if not width == height >= 48:
+        errors.append(f"interface.{field} image must be square and at least 48×48")
+    elif suffix != ".svg" and width > 4096:
+        errors.append(f"interface.{field} raster image must not exceed 4096×4096")
 
 
 def _validate_interface(root: Path, interface: dict, errors: list[str]) -> None:
@@ -136,7 +245,7 @@ def _validate_interface(root: Path, interface: dict, errors: list[str]) -> None:
         value = interface.get(field)
         if not isinstance(value, str) or not value.strip() or len(value) > limit:
             errors.append(f"interface.{field} must be non-empty and at most {limit} characters")
-        elif field in {"displayName", "shortDescription"} and value.splitlines() != [value]:
+        elif field != "longDescription" and value.splitlines() != [value]:
             errors.append(f"interface.{field} must be one line")
 
     if "not clinical advice" not in str(interface.get("longDescription", "")):
@@ -148,18 +257,24 @@ def _validate_interface(root: Path, interface: dict, errors: list[str]) -> None:
 
     for field, count, limit in (("capabilities", 20, 120), ("defaultPrompt", 3, 128)):
         items = interface.get(field, [])
+        if field == "defaultPrompt" and isinstance(items, str):
+            items = [items]
         if (
             not isinstance(items, list) or len(items) > count
-            or any(not isinstance(item, str) or len(item) > limit for item in items)
+            or any(not isinstance(item, str) or not item.strip() or len(item) > limit for item in items)
         ):
-            errors.append(f"interface.{field} must have at most {count} text items of at most {limit} characters")
-        elif field == "defaultPrompt" and len(set(items)) != len(items):
-            errors.append("interface.defaultPrompt items must be unique")
+            errors.append(f"interface.{field} allows up to {count} non-blank text items of at most {limit} characters")
+        elif any(item.splitlines() != [item] for item in items):
+            errors.append(f"interface.{field} items must be one line")
+        elif field == "defaultPrompt":
+            prompts = {normalize("NFC", " ".join(item.split())) for item in items}
+            if len(prompts) != len(items):
+                errors.append("interface.defaultPrompt items must be unique after normalising whitespace and Unicode")
 
     for field, background in (("brandColor", "#FFFFFF"), ("brandColorDark", "#212121")):
         colour = interface.get(field)
-        if not isinstance(colour, str) or not re.fullmatch(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})", colour):
-            errors.append(f"interface.{field} must be a hex colour")
+        if not isinstance(colour, str) or not re.fullmatch(r"#[0-9a-fA-F]{6}", colour):
+            errors.append(f"interface.{field} must be a six-digit #RRGGBB colour")
             continue
         darker, lighter = sorted((_luminance(colour), _luminance(background)))
         if (lighter + 0.05) / (darker + 0.05) < 2:
@@ -167,23 +282,25 @@ def _validate_interface(root: Path, interface: dict, errors: list[str]) -> None:
 
     for field in ("logo", "composerIcon"):
         _validate_icon(root, field, interface.get(field), errors)
+    for field in ("logoDark", "composerIconDark"):
+        if field in interface:
+            _validate_icon(root, field, interface[field], errors)
 
 
 def _validate_manifest(root: Path, manifest: dict, errors: list[str]) -> str:
+    if manifest.get("$schema") != PLUGIN_SCHEMA:
+        errors.append(f"plugin.json $schema must equal {PLUGIN_SCHEMA}")
     name = manifest.get("name")
     if not isinstance(name, str) or len(name) > 64 or not PLUGIN_NAME.fullmatch(name):
         errors.append("plugin.json name must be kebab-case ASCII and at most 64 characters")
         name = ""
     version = manifest.get("version")
-    if not isinstance(version, str) or not SEMVER.fullmatch(version):
-        errors.append("plugin.json version must be SemVer")
+    if not isinstance(version, str) or len(version) > 64 or not SEMVER.fullmatch(version):
+        errors.append("plugin.json version must be SemVer and at most 64 characters")
     description = manifest.get("description")
     if not isinstance(description, str) or not description.strip():
         errors.append("plugin.json description must be non-empty")
-    for key in sorted({"apps", "mcpServers", "review"} & manifest.keys()):
-        errors.append(f"plugin.json must not contain the top-level {key} key")
-
-    _validate_urls(manifest, "plugin.json", errors)
+    _validate_manifest_fields(manifest, "plugin.json", errors)
     extensions = manifest.get("extensions")
     openai = extensions.get("com.openai") if isinstance(extensions, dict) else None
     if not isinstance(openai, dict):
@@ -195,51 +312,55 @@ def _validate_manifest(root: Path, manifest: dict, errors: list[str]) -> str:
     else:
         errors.append("plugin.json must contain an extensions.com.openai.interface object")
     onboarding = _local_file(root, openai.get("onboardingSkill"))
-    if onboarding is None or not _included(onboarding.relative_to(root)):
-        errors.append("onboardingSkill must point to an existing packaged file")
+    relative = onboarding.relative_to(root) if onboarding is not None else None
+    if (
+        relative is None or not _included(relative) or len(relative.parts) != 3
+        or relative.parts[0] != "skills" or relative.name != "SKILL.md"
+    ):
+        errors.append("onboardingSkill must point to an existing packaged skills/<name>/SKILL.md")
     return name
 
 
 def _skill_metadata(content: str) -> dict[str, str]:
-    """Read the simple scalar fields used in this package's skill frontmatter."""
+    """Read a flat frontmatter mapping of single-line text values."""
     lines = content.splitlines()
     if not lines or lines[0] != "---":
-        return {}
+        raise ValueError("frontmatter must start with ---")
     try:
         end = lines.index("---", 1)
-    except ValueError:
-        return {}
+    except ValueError as exc:
+        raise ValueError("frontmatter must end with ---") from exc
     fields: dict[str, str] = {}
-    key = ""
-    for line in lines[1:end]:
-        if not line.strip() or line.lstrip().startswith("#"):
+    for number, line in enumerate(lines[1:end], start=2):
+        if not line.strip():
             continue
-        if line[0].isspace() and key:
-            fields[key] += " " + line.strip()
-            continue
-        key, separator, value = line.partition(":")
-        key = key.strip()
-        if key not in {"name", "description"}:
-            key = ""
-            continue
-        if not separator or key in fields:
-            return {}
+        match = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_-]*):[ \t]+(.+)", line)
+        if match is None:
+            raise ValueError(f"frontmatter line {number} must be a key: value pair")
+        key, value = match.groups()
+        if key in fields:
+            raise ValueError(f"frontmatter line {number} repeats key {key}")
         value = value.strip()
-        if re.fullmatch(r"[|>][+-]?", value):
-            value = ""
-        elif value.startswith('"'):
+        if value.startswith('"'):
             try:
-                value = json.loads(value)
-            except ValueError:
-                return {}
+                value, end_quote = json.JSONDecoder().raw_decode(value)
+            except ValueError as exc:
+                raise ValueError(f"frontmatter line {number} has an invalid quoted value") from exc
+            if not re.fullmatch(r"(?:[ \t]+#.*)?", match[2].strip()[end_quote:]):
+                raise ValueError(f"frontmatter line {number} has text after the quoted value")
         elif value.startswith("'"):
-            if len(value) < 2 or not value.endswith("'"):
-                return {}
-            value = value[1:-1].replace("''", "'")
-        elif value.startswith(("[", "{")) or value in {"~", "null", "true", "false"}:
-            return {}
+            quoted = re.fullmatch(r"'((?:[^']|'')*)'(?:[ \t]+#.*)?", value)
+            if quoted is None:
+                raise ValueError(f"frontmatter line {number} has an invalid quoted value")
+            value = quoted[1].replace("''", "'")
         else:
             value = re.split(r"\s+#", value, maxsplit=1)[0]
+            if (
+                not value or value[0] in "[]{}|>&*!#%@`"
+                or re.search(r"(^[-?:](\s|$)|:(\s|$))", value)
+                or value.lower() in {"~", "null", "true", "false"}
+            ):
+                raise ValueError(f"frontmatter line {number} must contain a single-line text value")
         fields[key] = value
     return {key: value.strip() for key, value in fields.items()}
 
@@ -262,7 +383,11 @@ def _validate_skills(root: Path, paths: list[Path], plugin_name: str, errors: li
             errors.append(f"{label} is required")
             continue
         content = path.read_text(encoding="utf-8")
-        metadata = _skill_metadata(content)
+        try:
+            metadata = _skill_metadata(content)
+        except ValueError as exc:
+            errors.append(f"{label} {exc}")
+            continue
         name = metadata.get("name", "")
         description = metadata.get("description", "")
         if not SKILL_NAME.fullmatch(name):
@@ -321,6 +446,31 @@ def _validate_text(path: Path, relative: Path, manifest: dict | None, errors: li
             errors.append(f"{label} contains an NHS-number-like sequence outside the synthetic 999 range")
 
 
+def _validate_archive_members(root: Path, files: list[Path], errors: list[str]) -> None:
+    if len(files) > MAX_ARCHIVE_ENTRIES:
+        errors.append("ZIP must contain at most 5,000 entries")
+    seen: dict[str, str] = {}
+    total = 0
+    for path in files:
+        relative = path.relative_to(root)
+        name = relative.as_posix()
+        if "\\" in name:
+            errors.append(f"{name} contains a backslash")
+        # The archive adds the plugin name as its enclosing directory.
+        if len(relative.parts) + 1 > MAX_MEMBER_SEGMENTS:
+            errors.append(f"{name} would exceed 20 ZIP path segments")
+        canonical = normalize("NFC", normalize("NFC", name).casefold())
+        if canonical in seen:
+            errors.append(f"{name} collides with {seen[canonical]} after case and Unicode normalisation")
+        seen[canonical] = name
+        size = path.stat().st_size
+        if size > MAX_MEMBER_BYTES:
+            errors.append(f"{name} exceeds the 100 MiB ZIP member limit")
+        total += size
+    if total > MAX_EXTRACTED_BYTES:
+        errors.append("Extracted ZIP must not exceed 512 MiB")
+
+
 def _inspect_package(root: Path, errors: list[str]) -> tuple[dict, list[Path]]:
     if not root.is_dir():
         errors.append("Package directory does not exist")
@@ -330,7 +480,9 @@ def _inspect_package(root: Path, errors: list[str]) -> tuple[dict, list[Path]]:
     files: list[Path] = []
     for path in sorted(root.rglob("*")):
         relative = path.relative_to(root)
-        if path.name in {".app.json", ".mcp.json"} or (path.name == "hooks" and path.is_dir()):
+        if path.name in {".app.json", ".mcp.json"} or relative == Path("mcp.json") or (
+            path.name == "hooks" and path.is_dir()
+        ):
             errors.append(f"{relative.as_posix()} is prohibited in a skills-only package")
         if path.is_symlink():
             errors.append(f"{relative.as_posix()} must not be a symbolic link")
@@ -341,6 +493,10 @@ def _inspect_package(root: Path, errors: list[str]) -> tuple[dict, list[Path]]:
         (path for path in files if _included(path.relative_to(root))),
         key=lambda path: path.relative_to(root).as_posix(),
     )
+    earlier_errors = len(errors)
+    _validate_archive_members(root, packaged, errors)
+    if len(errors) != earlier_errors:
+        return {}, packaged
     for name in sorted(ROOT_FILES):
         if root / name not in packaged:
             errors.append(f"{name} is required")
@@ -377,6 +533,8 @@ def validate_package(root: Path) -> list[str]:
 
 def build_zip(root: Path, out_dir: Path) -> Path:
     """Build a deterministic submission ZIP or raise ValueError if invalid."""
+    if out_dir.resolve().is_relative_to(root.resolve()):
+        raise ValueError("ZIP output directory must be outside the package root")
     manifest, files, errors = _check_package(root)
     if errors:
         raise ValueError("\n".join(errors))
@@ -392,6 +550,8 @@ def build_zip(root: Path, out_dir: Path) -> Path:
                 entry.create_system = 3
                 entry.external_attr = 0o100644 << 16
                 archive.writestr(entry, path.read_bytes(), compress_type=ZIP_DEFLATED)
+        if temporary.stat().st_size > MAX_ARCHIVE_BYTES:
+            raise ValueError("Compressed ZIP must not exceed 100 MB")
         temporary.replace(destination)
     finally:
         temporary.unlink(missing_ok=True)

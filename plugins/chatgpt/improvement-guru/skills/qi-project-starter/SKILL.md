@@ -50,7 +50,7 @@ Define a family of measures using `references/measures-and-run-charts.md`:
 - one or two process measures;
 - one balancing measure.
 
-For each, give an operational definition, the numerator and denominator (or what is timed, from when to when), inclusions and exclusions, how often it is collected, and the type of data source in general terms. Keep data to the minimum: counts and times, no identifiers. Explain how the measures will be shown on a run chart and which signals to look for.
+For each, give an operational definition, the numerator and denominator (or what is timed, from when to when), inclusions and exclusions, how often it is collected, and the type of data source in general terms. Keep data to the minimum: aggregate counts and medians, with no identifiers and no patient-level rows. Explain how the measures will be shown on a run chart and which signals to look for.
 
 ## Stage 4: First PDSA test
 

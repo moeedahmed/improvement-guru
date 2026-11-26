@@ -58,11 +58,13 @@ To check locally:
 
 ## 6. Local checks before any real project
 
-- QI or audit registration route confirmed with the local QI or audit team
-- IG and Caldicott requirements confirmed
-- Clinical governance route confirmed
-- Data source owner confirmed
-- Patient and public involvement considered
+Status: not yet done. Each check needs confirming with the local team before any real project.
+
+- [ ] QI or audit registration route: the local QI or audit team
+- [ ] IG and Caldicott requirements: the local IG lead or Caldicott Guardian
+- [ ] Clinical governance route: the clinical governance lead
+- [ ] Data source owner and access: the data or digital contact
+- [ ] Patient and public involvement: the local patient experience or involvement team
 
 ## Limits
 

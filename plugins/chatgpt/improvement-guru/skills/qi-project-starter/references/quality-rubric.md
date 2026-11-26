@@ -42,4 +42,5 @@ If the type is unclear, say so and suggest the user confirms it with the local Q
 - Every cited source is from `uk-sources.md`, with its link.
 - Nothing local was invented; unknowns are marked [to confirm locally].
 - No identifiable or case-level detail appears anywhere in the pack.
+- Local checks are shown as not yet done, never as confirmed.
 - The Limits section is present and unchanged.

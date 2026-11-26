@@ -19,7 +19,7 @@ Status: draft for learning and planning. All figures are fictional. Confirm ever
 - In scope: adults (as defined by the department [to confirm locally]) recorded at triage with severe pain on the department's pain scale; first analgesia only.
 - Out of scope for this cycle: children; the choice of analgesic, dose or route, which are clinical decisions for local guidelines; pain reassessment, which could be a later cycle.
 - Team roles needed: emergency medicine consultant lead, triage nurse lead, nurse in charge, a data or digital contact, a patient representative.
-- Risks and safeguards: extra triage workload (watched through the balancing measure); triage being rushed (balancing measure); no identifiable data collected (weekly counts and times only).
+- Risks and safeguards: extra triage workload (watched through the balancing measure); triage being rushed (balancing measure); no identifiable data collected (weekly aggregate counts and medians only).
 
 ## 2. SMART aim
 
@@ -60,7 +60,7 @@ Chosen change and why: idea 2. It is small, needs no system change, is easy to s
 
 | Step | Detail |
 | --- | --- |
-| Plan | The triage nurse adds a severe-pain flag to the board entry for each adult triaged with severe pain, and the nurse in charge checks flagged patients every 15 minutes. One triage nurse and the nurse in charge, adult area, one weekday day shift [date to confirm locally]. Prediction: at least 8 of the next 10 flagged patients get first analgesia within 30 minutes of arrival. Data: a tally sheet with only the arrival time, flag time and first analgesia time for each flagged patient, with no names or numbers. Stop rule: stop if triage is delayed by more than 10 minutes on average, or if staff raise a safety or workload concern. |
+| Plan | The triage nurse adds a severe-pain flag to the board entry for each adult triaged with severe pain, and the nurse in charge reviews flagged patients on the board at an interval agreed locally [to confirm locally]. One triage nurse and the nurse in charge, adult area, one weekday day shift [date to confirm locally]. Prediction: at least 8 of the next 10 flagged patients get first analgesia within 30 minutes of arrival. Data: a tally sheet for the shift that counts how many flagged patients got first analgesia within 30 minutes of arrival and how many did not, with no names, numbers or individual times. The time to triage for the shift comes from the department's routine report. Stop rule: stop if staff report that triage is being delayed, or raise a safety or workload concern. |
 | Do | Record what happened, any changes to the plan and staff comments. |
 | Study | Compare the results with the prediction, check the time to triage on that shift, and ask both staff members what helped and what got in the way. |
 | Act | Adopt (try it on more shifts) if 8 or more of 10 get analgesia within 30 minutes with no delay to triage. Adapt (change who checks, or how often) if 5 to 7 do. Abandon (test another idea) if fewer than 5 do, or if triage is delayed. |
@@ -79,11 +79,13 @@ To check locally:
 
 ## 6. Local checks before any real project
 
-- QI or audit registration route confirmed with the local QI or audit team
-- IG and Caldicott requirements confirmed
-- Clinical governance route confirmed
-- Data source owner confirmed
-- Patient and public involvement considered
+Status: not yet done. Each check needs confirming with the local team before any real project.
+
+- [ ] QI or audit registration route: the local QI or audit team
+- [ ] IG and Caldicott requirements: the local IG lead or Caldicott Guardian
+- [ ] Clinical governance route: the clinical governance lead
+- [ ] Data source owner and access: the data or digital contact
+- [ ] Patient and public involvement: the local patient experience or involvement team
 
 ## Limits
 
