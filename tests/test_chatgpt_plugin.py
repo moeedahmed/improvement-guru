@@ -1,3 +1,4 @@
+from base64 import b64decode
 import json
 import os
 from pathlib import Path
@@ -77,6 +78,7 @@ def test_build_zip_is_repeatable_and_excludes_hidden_files_and_caches(package_co
         ("defaultPrompt", ["Starter", " Starter "], "interface.defaultPrompt items must be unique"),
         ("defaultPrompt", ["Café starter", "Cafe\u0301  starter"], "interface.defaultPrompt items must be unique"),
         ("websiteURL", "https://user@example.test/", "interface.websiteURL must be an HTTPS URL"),
+        ("websiteURL", "https://example.org:abc", "interface.websiteURL must be an HTTPS URL"),
     ],
 )
 def test_invalid_listing_fields_are_reported(package_copy, field, value, expected):
@@ -93,10 +95,13 @@ def test_invalid_listing_fields_are_reported(package_copy, field, value, expecte
         ("extensions/com.openai/onboardingSkill", "./README.md", "onboardingSkill must point"),
         ("extensions/com.openai/onboardingSkill", "./skills/missing/SKILL.md", "onboardingSkill must point"),
         ("homepage", "https:///missing-host", "plugin.json.homepage must be an HTTPS URL"),
+        ("homepage", "https://example.org:abc", "plugin.json.homepage must be an HTTPS URL"),
         ("homepage", "https://example.test/" + "a" * 2028, "homepage must be an HTTPS URL of at most 2048"),
         ("repository", "https://user:example@example.test", "plugin.json.repository must be an HTTPS URL"),
+        ("repository", "https://example.org:abc", "plugin.json.repository must be an HTTPS URL"),
         ("author/url", "http://example.test", "plugin.json.author.url must be an HTTPS URL"),
         ("author/url", "https://@example.test", "plugin.json.author.url must be an HTTPS URL"),
+        ("author/url", "https://example.org:abc", "plugin.json.author.url must be an HTTPS URL"),
     ],
 )
 def test_invalid_manifest_fields_are_reported(package_copy, field_path, value, expected):
@@ -148,13 +153,26 @@ def _png(width, height):
     )
 
 
-def _jpeg_header(width, height):
-    return b"\xff\xd8\xff\xe0\x00\x02\xff\xc0" + pack(">HBHHBBBB", 11, 8, height, width, 1, 1, 0x11, 0)
+# Complete 48×48 black images.
+PNG = _png(48, 48)
+JPEG = b64decode(
+    "/9j/4AAQSkZJRgABAgAAAQABAAD//gAPTGF2YzYzLjEuMTAyAP/bAEMACAQEBAQEBQUFBQUFBgYGBgYGBgYGBgYG"
+    "BgcHBwgICAcHBwYGBwcICAgICQkJCAgICAkJCgoKDAwLCw4ODhERFP/EAEsAAQEAAAAAAAAAAAAAAAAAAAAIAQEA"
+    "AAAAAAAAAAAAAAAAAAAAEAEAAAAAAAAAAAAAAAAAAAAAEQEAAAAAAAAAAAAAAAAAAAAA/8AAEQgAMAAwAwEiAAIR"
+    "AAMRAP/aAAwDAQACEQMRAD8An8AAAAAAAAAAAAAAAAAH/9k="
+)
+JPEG_SCAN = JPEG.index(b"\xff\xda")
+JPEG_SCAN_DATA = JPEG_SCAN + 2 + int.from_bytes(JPEG[JPEG_SCAN + 2:JPEG_SCAN + 4], "big")
+WEBP_LOSSLESS = b64decode("UklGRiAAAABXRUJQVlA4TBQAAAAvL8ALAAcQEf0PAAnh/3oxov+pBw==")
+WEBP_LOSSY = b64decode("UklGRjYAAABXRUJQVlA4ICoAAAAwAwCdASowADAAPpFIn0ulpCKho4gAsBIJaQAAG4G9Pg4AAP74zv0oAAA=")
+WEBP_EXTENDED = b64decode(
+    "UklGRmAAAABXRUJQVlA4WAoAAAAEAAAALwAALwAAVlA4TBQAAAAvL8ALAAcQEf0PAAnh/3oxov+pB1hNUCAlAAAA"
+    "PHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIvPgA="
+)
 
 
-def _webp_header(width, height):
-    bits = width - 1 | ((height - 1) << 14)
-    chunk = b"WEBPVP8L" + pack("<I", 5) + b"\x2f" + pack("<I", bits) + b"\0"
+def _webp(*chunks):
+    chunk = b"WEBP" + b"".join(chunks)
     return b"RIFF" + pack("<I", len(chunk)) + chunk
 
 
@@ -165,26 +183,58 @@ def _set_logo(package, suffix, data):
 
 
 @pytest.mark.parametrize(
-    ("suffix", "make_image"),
-    [(".png", _png), (".jpg", _jpeg_header), (".jpeg", _jpeg_header), (".webp", _webp_header)],
+    ("suffix", "data"),
+    [
+        (".png", PNG),
+        (".jpg", JPEG),
+        (".jpeg", JPEG),
+        (".webp", WEBP_LOSSLESS),
+        (".webp", WEBP_LOSSY),
+        (".webp", WEBP_EXTENDED),
+    ],
 )
-def test_raster_headers_match_format_and_dimensions(package_copy, suffix, make_image):
-    _set_logo(package_copy, suffix, make_image(48, 48))
+def test_raster_images_match_format(package_copy, suffix, data):
+    _set_logo(package_copy, suffix, data)
     assert validate_package(package_copy) == []
+    assert build_chatgpt_plugin._raster_dimensions(data, suffix) == (48, 48)
 
-    _set_logo(package_copy, suffix, make_image(48, 49))
-    assert any("interface.logo image must be square" in error for error in validate_package(package_copy))
-
-    _set_logo(package_copy, suffix, b"not an image" if suffix == ".png" else _png(48, 48))
-    assert any(f"valid {suffix} image header" in error for error in validate_package(package_copy))
+    _set_logo(package_copy, suffix, WEBP_LOSSLESS if suffix == ".png" else PNG)
+    assert any(f"valid {suffix} image" in error for error in validate_package(package_copy))
 
 
 @pytest.mark.parametrize(
-    ("side", "expected"),
-    [(47, "at least 48×48"), (4097, "raster image must not exceed 4096×4096")],
+    ("suffix", "data"),
+    [
+        pytest.param(".png", PNG[:33], id="png-header-only"),
+        pytest.param(".png", PNG[:33] + PNG[-12:], id="png-missing-idat"),
+        pytest.param(".png", PNG[:-12], id="png-missing-iend"),
+        pytest.param(".png", PNG[:-13] + bytes([PNG[-13] ^ 1]) + PNG[-12:], id="png-bad-idat-crc"),
+        pytest.param(".png", PNG + b"extra", id="png-trailing-data"),
+        pytest.param(".jpg", JPEG[:JPEG_SCAN], id="jpeg-header-only"),
+        pytest.param(".jpg", JPEG[:JPEG_SCAN] + JPEG[-2:], id="jpeg-missing-sos"),
+        pytest.param(".jpg", JPEG[:JPEG_SCAN_DATA] + JPEG[-2:], id="jpeg-empty-scan"),
+        pytest.param(".jpeg", JPEG[:-2], id="jpeg-missing-eoi"),
+        pytest.param(".webp", WEBP_LOSSLESS[:-1], id="webp-wrong-riff-size"),
+        pytest.param(".webp", _webp(b"VP8L" + pack("<I", 5) + WEBP_LOSSLESS[20:25] + b"\0"), id="webp-header-only"),
+        pytest.param(".webp", _webp(WEBP_EXTENDED[12:30]), id="webp-missing-image"),
+        pytest.param(".webp", _webp(WEBP_EXTENDED[12:35]), id="webp-truncated-image-chunk"),
+    ],
 )
-def test_raster_dimension_limits(package_copy, side, expected):
-    _set_logo(package_copy, ".jpg", _jpeg_header(side, side))
+def test_incomplete_raster_images_are_rejected(package_copy, suffix, data):
+    _set_logo(package_copy, suffix, data)
+    assert any(f"valid {suffix} image" in error for error in validate_package(package_copy))
+
+
+@pytest.mark.parametrize(
+    ("width", "height", "expected"),
+    [
+        (47, 47, "at least 48×48"),
+        (48, 49, "image must be square"),
+        (4097, 4097, "raster image must not exceed 4096×4096"),
+    ],
+)
+def test_raster_dimension_limits(package_copy, width, height, expected):
+    _set_logo(package_copy, ".png", _png(width, height))
     assert any(expected in error for error in validate_package(package_copy))
 
 
@@ -296,8 +346,34 @@ def test_simple_quoted_frontmatter_is_accepted(package_copy):
     content = path.read_text(encoding="utf-8")
     body = content.split("\n---\n", 1)[1]
     path.write_text(
-        "---\nname: 'qi-project-starter'\ndescription: \"Draft a starter pack: QI only.\"\n"
+        "---\n# Skill metadata\n\nname: 'qi-project-starter'\n  # Description\n"
+        "description: \"Draft a starter pack: QI only.\"\n"
         "extra: 'It''s a scalar' # inline comment\n---\n" + body,
         encoding="utf-8",
     )
+    assert validate_package(package_copy) == []
+
+
+@pytest.mark.parametrize("key", ["name", "description"])
+@pytest.mark.parametrize(
+    "value",
+    [
+        "123", "-42", "0x10", "1.25", "1e3", ".inf", ".NaN", "2026-11-26",
+        "true", "FALSE", "yes", "NO", "on", "Off", "null", "~",
+        "[item]", "{key: value}", "&anchor text", "*alias", "!tag text", "|", ">", "key: value",
+    ],
+)
+def test_required_frontmatter_fields_reject_plain_non_strings(package_copy, key, value):
+    path = package_copy / SKILL_PATH
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    index = next(index for index, line in enumerate(lines) if line.startswith(f"{key}: "))
+    lines[index] = f"{key}: {value}\n"
+    path.write_text("".join(lines), encoding="utf-8")
+    assert any("frontmatter line" in error for error in validate_package(package_copy))
+
+
+def test_quoted_numeric_and_boolean_frontmatter_stays_text(package_copy):
+    path = package_copy / SKILL_PATH
+    body = path.read_text(encoding="utf-8").split("\n---\n", 1)[1]
+    path.write_text("---\nname: '123'\ndescription: \"false\"\n---\n" + body, encoding="utf-8")
     assert validate_package(package_copy) == []

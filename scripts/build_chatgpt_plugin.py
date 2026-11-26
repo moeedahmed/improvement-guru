@@ -39,6 +39,7 @@ MAX_ARCHIVE_ENTRIES = 5_000
 MAX_MEMBER_SEGMENTS = 20
 JPEG_FRAME_MARKERS = {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7,
                       0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF}
+JPEG_SCAN_MARKER = re.compile(rb"\xff+([\x00-\xfe])")
 SVG_NUMBER = re.compile(r"[+-]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
 PLUGIN_NAME = re.compile(r"[a-z0-9]+(?:[-_][a-z0-9]+)*")
 SKILL_NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
@@ -52,6 +53,17 @@ PUBLIC_TITLES = re.compile(r"\b(?:founder|CEO|entrepreneur)\b", re.IGNORECASE)
 NHS_LIKE = re.compile(r"(?<!\d)\d{3}[ \t]*\d{3}[ \t]*\d{4}(?!\d)")
 SKILL_LINK = re.compile(r"`+((?:references|assets)/[^`\r\n]+)`+")
 LIMITS = re.compile(r"^## Limits[^\S\n]*\n(.*?)(?=^#{1,2}[ \t]|\Z)", re.MULTILINE | re.DOTALL)
+YAML_PLAIN_NUMBER = re.compile(
+    r"[+-]?(?:0b[01_]+|0o[0-7_]+|0x[0-9a-f_]+|"
+    r"(?:[0-9][0-9_]*(?:\.[0-9_]*)?|\.[0-9_]+)(?:e[+-]?[0-9]+)?|"
+    r"[0-9][0-9_]*(?::[0-5]?[0-9])+(?:\.[0-9_]*)?|\.inf|\.nan)",
+    re.IGNORECASE,
+)
+YAML_PLAIN_TIMESTAMP = re.compile(
+    r"[0-9]{4}-(?:[0-9]{2}-[0-9]{2}|"
+    r"[0-9]{1,2}-[0-9]{1,2}[Tt \t]+[0-9]{1,2}:[0-9]{2}:[0-9]{2}"
+    r"(?:\.[0-9]*)?(?:[ \t]*(?:Z|[+-][0-9]{1,2}(?::[0-9]{2})?))?)"
+)
 
 
 def _included(path: Path) -> bool:
@@ -96,6 +108,7 @@ def _valid_url(value: object, limit: int | None) -> bool:
         return False
     try:
         url = urlsplit(value)
+        _ = url.port  # urlsplit defers port validation until this attribute is read.
         return bool(url.hostname) and url.username is None
     except ValueError:
         return False
@@ -132,31 +145,65 @@ def _luminance(colour: str) -> float:
     return sum(weight * channel for weight, channel in zip((0.2126, 0.7152, 0.0722), linear))
 
 
+def _jpeg_scan_end(data: bytes, start: int) -> int | None:
+    """Find the next segment marker, skipping stuffed bytes and restart markers."""
+    has_data = False
+    for match in JPEG_SCAN_MARKER.finditer(data, start):
+        marker = match[1][0]
+        has_data |= match.start() > start or marker == 0
+        if marker != 0 and not 0xD0 <= marker <= 0xD7:
+            return match.start() if has_data else None
+        start = match.end()
+    return None
+
+
 def _jpeg_dimensions(data: bytes) -> tuple[int, int] | None:
-    if not data.startswith(b"\xff\xd8"):
+    if not data.startswith(b"\xff\xd8") or not data.endswith(b"\xff\xd9"):
         return None
+    dimensions = None
+    saw_scan = False
     offset = 2
     while offset < len(data) and data[offset] == 0xFF:
         while offset < len(data) and data[offset] == 0xFF:
             offset += 1
-        if offset + 3 > len(data):
-            break
         marker = data[offset]
-        if marker in {0, 0xD8, 0xD9, 0xDA} or 0xD0 <= marker <= 0xD7:
-            break
-        if marker == 1:  # Standalone TEM marker.
-            offset += 1
-            continue
         offset += 1
+        if marker == 0xD9:
+            return dimensions if saw_scan and offset == len(data) else None
+        if marker in {0, 0xD8} or 0xD0 <= marker <= 0xD7:
+            return None
+        if marker == 1:  # Standalone TEM marker.
+            continue
+        if offset + 2 > len(data):
+            return None
         length = int.from_bytes(data[offset:offset + 2], "big")
-        if length < 2 or offset + length > len(data):
-            break
+        end = offset + length
+        if length < 2 or end > len(data):
+            return None
         if marker in JPEG_FRAME_MARKERS:
             if length < 8 or length != 8 + 3 * data[offset + 7] or not data[offset + 7]:
-                break
+                return None
             height, width = unpack(">HH", data[offset + 3:offset + 7])
-            return width, height
-        offset += length
+            dimensions = width, height
+        if marker == 0xDA:
+            if dimensions is None or length < 8 or length != 6 + 2 * data[offset + 2]:
+                return None
+            scan_end = _jpeg_scan_end(data, end)
+            if scan_end is None:
+                return None
+            saw_scan = True
+            end = scan_end
+        offset = end
+    return None
+
+
+def _webp_frame_dimensions(kind: bytes, payload: bytes) -> tuple[int, int] | None:
+    if kind == b"VP8L" and len(payload) > 5 and payload[0] == 0x2F and payload[4] >> 5 == 0:
+        bits = int.from_bytes(payload[1:5], "little")
+        return (bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1
+    if kind == b"VP8 " and len(payload) > 10 and not payload[0] & 1 and payload[3:6] == b"\x9d\x01\x2a":
+        width, height = unpack("<HH", payload[6:10])
+        return width & 0x3FFF, height & 0x3FFF
     return None
 
 
@@ -164,20 +211,30 @@ def _webp_dimensions(data: bytes) -> tuple[int, int] | None:
     if len(data) < 20 or data[:4] != b"RIFF" or data[8:12] != b"WEBP":
         return None
     riff_size = int.from_bytes(data[4:8], "little")
-    chunk_size = int.from_bytes(data[16:20], "little")
-    if riff_size + 8 != len(data) or 20 + chunk_size + (chunk_size % 2) > len(data):
+    if riff_size + 8 != len(data):
         return None
-    kind = data[12:16]
-    if kind == b"VP8X" and chunk_size == 10:
-        return (1 + int.from_bytes(data[24:27], "little"),
-                1 + int.from_bytes(data[27:30], "little"))
-    if kind == b"VP8L" and chunk_size >= 5 and data[20] == 0x2F and data[24] >> 5 == 0:
-        bits = int.from_bytes(data[21:25], "little")
-        return (bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1
-    if kind == b"VP8 " and chunk_size >= 10 and not data[20] & 1 and data[23:26] == b"\x9d\x01\x2a":
-        width, height = unpack("<HH", data[26:30])
-        return width & 0x3FFF, height & 0x3FFF
-    return None
+    canvas = frame = None
+    offset = 12
+    while offset < len(data):
+        if offset + 8 > len(data):
+            return None
+        kind = data[offset:offset + 4]
+        chunk_size = int.from_bytes(data[offset + 4:offset + 8], "little")
+        end = offset + 8 + chunk_size
+        next_chunk = end + chunk_size % 2
+        if next_chunk > len(data):
+            return None
+        if kind == b"VP8X":
+            if offset != 12 or chunk_size != 10:
+                return None
+            canvas = (1 + int.from_bytes(data[end - 6:end - 3], "little"),
+                      1 + int.from_bytes(data[end - 3:end], "little"))
+        elif kind in {b"VP8 ", b"VP8L"}:
+            frame = _webp_frame_dimensions(kind, data[offset + 8:end])
+            if frame is None:
+                return None
+        offset = next_chunk
+    return (canvas or frame) if frame is not None else None
 
 
 def _raster_dimensions(data: bytes, suffix: str) -> tuple[int, int] | None:
@@ -187,9 +244,20 @@ def _raster_dimensions(data: bytes, suffix: str) -> tuple[int, int] | None:
         return _webp_dimensions(data)
     if len(data) < 33 or not data.startswith(b"\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR"):
         return None
-    if crc32(data[12:29]) != int.from_bytes(data[29:33], "big"):
-        return None
-    return unpack(">II", data[16:24])
+    offset = 8
+    saw_image_data = False
+    while offset + 12 <= len(data):
+        length, kind = unpack(">I4s", data[offset:offset + 8])
+        end = offset + 8 + length
+        if end + 4 > len(data) or crc32(data[offset + 4:end]) != int.from_bytes(data[end:end + 4], "big"):
+            return None
+        if kind == b"IEND":
+            if saw_image_data and length == 0 and end + 4 == len(data):
+                return unpack(">II", data[16:24])
+            return None
+        saw_image_data |= kind == b"IDAT" and length > 0
+        offset = end + 4
+    return None
 
 
 def _svg_dimensions(data: bytes) -> tuple[float, float] | None:
@@ -229,7 +297,7 @@ def _validate_icon(root: Path, field: str, value: object, errors: list[str]) -> 
     else:
         dimensions = _raster_dimensions(data, suffix)
         if dimensions is None:
-            errors.append(f"interface.{field} must have a valid {suffix} image header")
+            errors.append(f"interface.{field} must be a complete, valid {suffix} image")
             return
     width, height = dimensions
     if not width == height >= 48:
@@ -332,7 +400,7 @@ def _skill_metadata(content: str) -> dict[str, str]:
         raise ValueError("frontmatter must end with ---") from exc
     fields: dict[str, str] = {}
     for number, line in enumerate(lines[1:end], start=2):
-        if not line.strip():
+        if not line.strip() or line.lstrip().startswith("#"):
             continue
         match = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_-]*):[ \t]+(.+)", line)
         if match is None:
@@ -355,10 +423,16 @@ def _skill_metadata(content: str) -> dict[str, str]:
             value = quoted[1].replace("''", "'")
         else:
             value = re.split(r"\s+#", value, maxsplit=1)[0]
+            lower = value.lower()
             if (
-                not value or value[0] in "[]{}|>&*!#%@`"
+                not value or value[0] in "[]{}|>&*!#%@`,"
                 or re.search(r"(^[-?:](\s|$)|:(\s|$))", value)
-                or value.lower() in {"~", "null", "true", "false"}
+                or lower in {"~", "null", "true", "false"}
+                or (key in {"name", "description"} and (
+                    lower in {"y", "n", "yes", "no", "on", "off"}
+                    or YAML_PLAIN_NUMBER.fullmatch(value)
+                    or YAML_PLAIN_TIMESTAMP.fullmatch(value)
+                ))
             ):
                 raise ValueError(f"frontmatter line {number} must contain a single-line text value")
         fields[key] = value
