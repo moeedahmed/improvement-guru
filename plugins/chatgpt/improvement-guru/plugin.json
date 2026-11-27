@@ -1,0 +1,49 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "improvement-guru",
+  "version": "0.1.0",
+  "description": "Use made-up figures to plan a QI project: charter, SMART aim, measures and a first PDSA test, with checked UK-focused sources.",
+  "author": {
+    "name": "Moeed Ahmed",
+    "url": "https://github.com/moeedahmed"
+  },
+  "homepage": "https://github.com/moeedahmed/improvement-guru",
+  "repository": "https://github.com/moeedahmed/improvement-guru",
+  "license": "MIT",
+  "keywords": ["quality improvement", "QI", "PDSA", "SMART aim", "NHS", "healthcare", "audit"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Improvement Guru",
+        "shortDescription": "Plan your first QI project",
+        "longDescription": "Improvement Guru helps doctors, nurses and other healthcare staff start a quality improvement (QI) project in a structured way. Describe a service problem in general terms, or pick one of three fictional scenarios, and it works through five stages:\n\n1. Frame the problem and check it really is QI, not clinical audit, research or incident learning.\n2. Draft a project charter.\n3. Write a SMART aim and check it letter by letter.\n4. Define outcome, process and balancing measures with clear definitions, and explain run-chart signals.\n5. Plan a first small PDSA test with a prediction, a stop rule, and adopt, adapt or abandon thresholds set in advance.\n\nIt is UK-first. It uses NHS terms and links only to a checked list of UK-focused QI sources. Anything else, such as a specialty standard or a local policy, is listed as something to check locally, never invented.\n\nLimits: Improvement Guru is an educational planning aid. It is not clinical advice, not clinical decision support, and not QI, audit, ethics, information governance or clinical governance approval. Use a fictional scenario or describe a service process in general terms. All project figures are made up. Keep out real service figures and estimates, patient details, case material and uploads. It has no server and no account, and it collects nothing. Your conversation is handled by ChatGPT under OpenAI's policies. Confirm every plan with your local QI, audit, clinical governance and information governance teams before using it in real work.\n\nNot affiliated with or endorsed by OpenAI, the NHS or any organisation it links to. Published by Moeed Ahmed, a doctor who builds AI tools for doctors.",
+        "developerName": "Moeed Ahmed",
+        "category": "Education & Research",
+        "capabilities": [
+          "Draft a QI project charter",
+          "Write and check a SMART aim",
+          "Define outcome, process and balancing measures",
+          "Plan a first PDSA test of change",
+          "Link to a checked list of UK-focused QI sources"
+        ],
+        "websiteURL": "https://github.com/moeedahmed/improvement-guru",
+        "supportURL": "https://github.com/moeedahmed/improvement-guru/blob/main/plugins/chatgpt/improvement-guru/PRIVACY.md#contact-and-support",
+        "privacyPolicyURL": "https://github.com/moeedahmed/improvement-guru/blob/main/plugins/chatgpt/improvement-guru/PRIVACY.md",
+        "termsOfServiceURL": "https://github.com/moeedahmed/improvement-guru/blob/main/plugins/chatgpt/improvement-guru/TERMS.md#terms-of-use",
+        "defaultPrompt": [
+          "Help me start a QI project on slow pain relief in an emergency department, using a fictional example.",
+          "Turn this into a SMART aim and measures: clinic letters to GPs take too long to send.",
+          "Show me a worked QI starter pack using one of your fictional scenarios."
+        ],
+        "brandColor": "#1F4D3A",
+        "brandColorDark": "#8FC9A8",
+        "composerIcon": "./assets/icon.svg",
+        "logo": "./assets/logo.svg"
+      },
+      "onboardingSkill": "./skills/qi-project-starter/SKILL.md",
+      "publication": {
+        "release_notes": "First release: one QI project starter workflow with three fictional scenarios, a worked example and a checked list of UK-focused sources."
+      }
+    }
+  }
+}
